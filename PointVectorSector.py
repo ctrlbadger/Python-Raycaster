@@ -1,5 +1,6 @@
 import math
 
+# Point is a list of [x, y]
 class Point(list):
     def __init__(self, *args):
         super(Point, self).__init__(args)
@@ -14,7 +15,7 @@ class Point(list):
 
         if type(other) is self.__class__:
             return self.__class__(self[0] / other[0], self[1] / other[1])
-        else:
+        if other is int or other is float:
             return self.__class__(self[0]/other, self[1]/other)
     # Vector Dot Product for Point
     # Point Multiplication if anything else
@@ -23,7 +24,8 @@ class Point(list):
             return self.__class__(self[0] * other[0], self[1] * other[1])
         else:
             return self.__class__(self[0]*other, self[1]*other)
-    # Vector Cross Product
+
+    # Vector Cross Product. For example Point1 ^ Point2 = Point1.x*Point2.y - Point2.x*Point1.y
     def __xor__(self, other):
         return self[0]*other[1]-self[1]*other[0]
 
@@ -39,6 +41,8 @@ class Point(list):
         return self[0] > other[0] and self[1] > other[1]
     def __ge__(self, other):
         return self[0] >= other[0] and self[1] >= other[1]
+
+    # Changes Point into int. Used for when drawing coordinates.    
     def PointToIntPoint(self):
         return self.__class__(int(self[0]), int(self[1]))
     @property
@@ -62,17 +66,22 @@ class Vector(list):
     Color = None
     def __init__(self, *args):
         super(Vector, self).__init__(args)
-    def __sub__(self, Point1):
-        if Point1 is type(Point):
-            return self.__class__(self[0]*- Point1, self[1] - Point1)
-    def __contains__(self, Point1):
-        return (Point1 == self[0] or Point1 == self[1])
-
-    def HasPoint(self, Point):
-        if Point in self:
-            return self.index(Point)
-        else:
-            return False
+    def __sub__(self, Object):
+        if Object is type(Point):
+            return self.__class__(self[0] - Object, self[1] - Object)
+        elif Object is type(Vector):
+            return self.__class__(self[0] - Object[0], self[1] - Object[1])
+    def __add__(self, Object):
+        if Object is type(Point):
+            return self.__class__(self[0] + Object, self[1] + Object)
+        elif Object is type(Vector):
+            return self.__class__(self[0] + Object[0], self[1] + Object[1])
+    # Get Magnitude of the Vector
+    def Magnitude(self):
+        return math.sqrt(abs(self[0].x - self[1].x)**2 + abs(self[0].y - self[1].y)**2)
+    # Get Direction of the Vector
+    def Direction(self):
+        return math.arctan(abs(self[0].y - self[1].y) / abs(self[0].x - self[1].x))
     @property
     def point1(self):
         return self[0]
@@ -87,31 +96,11 @@ class Vector(list):
     def point2(self, value):
         self[1] = value
 
-
+# Sector is a List of 3 or more points
+# Sector is polygon that is used to speed up ray casting.
 class Sector(list):
     def __init__(self, *args):
         super(Sector, self).__init__(args)
-
-    def IsPointInSectorPointBased(self, Point):
-        Sides = []
-        # Dot cross the Vectors with the Point Vector
-        # To see which side side they are on
-        Sides.append((self[1]-self[0]) ^ (Point - Vector[0]))
-        Sides.append((self[2]-self[1]) ^ (Point - Vector[1]))
-        Sides.append((self[0]-self[2]) ^ (Point - Vector[2]))
-        if ((self[1] - self[0]) ^ (self[2] - self[0])) > 0:
-            return (len(list(filter(lambda x: x >= 0, Sides))) == 3)
-        else:
-            return (len(list(filter(lambda x: x <= 0, Sides))) == 3)
-
-    def __contains__(self, Point1):
-        return (Point1 == self[0] or Point1 == self[1])
-
-    def HasPoint(self, Point):
-        if Point in self:
-            return self.index(Point)
-        else:
-            return False
 
     @property
     def Vectors(self):
