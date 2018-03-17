@@ -2,20 +2,9 @@ import pygame
 from PointVectorSector import *
 from Graphics import *
 import pygame.gfxdraw
-"""
-def VectorIntersect(Vector1, Vector2):
 
-    PositionVector1 = (Vector1[1]-Vector1[0])
-    PositionVector2 = (Vector2[1]-Vector2[0])
-    RatioVector1 = ((Vector1[0]^PositionVector1)-(Vector2[0]^PositionVector1))/(PositionVector2^PositionVector1)
-    print("Ratio Vector1", RatioVector1)
-    RatioVector2 = ((Vector2[0]^PositionVector2)-(Vector1[0]^PositionVector2))/(PositionVector1^PositionVector2)
-    print("Ratio Vector2", RatioVector2)
-    if (0 <= RatioVector1 <= 1) and (0 <= RatioVector1 <= 1):
-        return True
-    else:
-        return False
-"""
+# Check if Line AB and CD intersect, however will return false if the points intersect.
+# This is used for checking if Created Vectors in a sector intersect
 def VectorIntersectLinesNotPoints(A, B, C, D):
     Denom = (B-A)^(D-C)
     if Denom == 0:
@@ -29,11 +18,30 @@ def VectorIntersectLinesNotPoints(A, B, C, D):
             return True
         else:
             return False
+# Check if Line AB and CD intersect
+# Used in the Actual Raycasting to check how far points are away
+def VectorIntersectLinesAndPoints(A, B, C, D):
+    Denom = (B-A)^(D-C)
+    if Denom == 0:
+        return False
+    else:
+        VectorU = ((C^(D-C))-(A^(D-C)))/Denom
+        print(VectorU)
+        VectorV = ((A^(B-A))-(C^(B-A)))/-Denom
+        print(VectorV)
+        if (0 <= VectorU <= 1) and (0 <= VectorV <= 1):
+            return True
+        else:
+            return False
 
+# Checks if the Triangle created by Point1, Point2 and Point3 Intersect
+# NOTE: Don't know if this works or not as haven't tried it but in principle it should
+# Might have to rename function IsTriangleAntiClockwise
 def IsTriangleClockwise(Point1, Point2, Point3):
     return (Point2-Point1)^(Point3-Point1) > 0
 
-
+# Check if Point4 is in Triangle bounded by Point1, Point2, Point3
+# Used to check if a point is in a given sector
 def IsPointInTriangle(Point1, Point2, Point3, Point4):
     Orientation1 = (Point2 - Point1)^(Point4 - Point1)
     Orientation2 = (Point3 - Point2)^(Point4 - Point2)
