@@ -41,6 +41,8 @@ class Point(list):
         return self[0] > other[0] and self[1] > other[1]
     def __ge__(self, other):
         return self[0] >= other[0] and self[1] >= other[1]
+    def __hash__(self):
+        return hash((self[0], self[1]))
 
     # Changes Point into int. Used for when drawing coordinates.
     def PointToIntPoint(self):
@@ -76,6 +78,8 @@ class Vector(list):
             return self.__class__(self[0] + Object, self[1] + Object)
         elif Object is type(Vector):
             return self.__class__(self[0] + Object[0], self[1] + Object[1])
+    def __hash__(self):
+        return hash((self[0], self[1]))
     # Get Magnitude of the Vector
     def Magnitude(self):
         return math.sqrt(abs(self[0].x - self[1].x)**2 + abs(self[0].y - self[1].y)**2)
@@ -104,7 +108,8 @@ class Sector(list):
 
     @property
     def Vectors(self):
-        return [Vector(self[0], self[1]), Vector(self[1], self[2]), Vector(self[2], self[0])]
+        #return [Vector(self[0], self[1]), Vector(self[1], self[2]), Vector(self[2], self[0])]
+        return [Vector(self[Index], self[(Index+1) % 2]) for Index in range(len(self))]
     @property
     def Point1(self): return self[0]
     @Point1.setter
