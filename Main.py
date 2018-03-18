@@ -1,6 +1,7 @@
 import pygame
 from PointVectorSector import *
 from Graphics import *
+from Map import *
 import pygame.gfxdraw
 
 graphics = Graphics([1000, 1000])
@@ -36,7 +37,6 @@ while True:
                 GetPos = GetPos[0]
                 GridX = int((GetPos.x + Offset.x)/ScaleFactor)
                 GridY = int((GetPos.y + Offset.y)/ScaleFactor)
-                print(Point(GridX, GridY))
                 IsDragging = True
                 graphics.LineDrag = Line(GetPos, Point(*pygame.mouse.get_pos()), pygame.Color('green'))
                 graphics.DirtySprites.add(graphics.LineDrag)
@@ -46,12 +46,13 @@ while True:
             #
             if GetPos != []:
                 GetPos = GetPos[0]
-                #Work out which part of the grid he is in
+                # Rescale the points to fit the grid size
                 OriginalPoint = (graphics.LineDrag.Point1 + Offset) / ScaleFactor
-
                 GridX = int((GetPos.x + Offset.x)/ScaleFactor)
                 GridY = int((GetPos.y + Offset.y)/ScaleFactor)
-                print(Point(GridX, GridY))
+
+
+                # Create any new vectors that need to be created
                 NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY) ))
                 graphics.DrawNewLines(NewVectors, ScaleFactor, Offset)
 
@@ -61,5 +62,3 @@ while True:
             graphics.LineDrag = None
             IsDragging = False
             graphics.DrawSprites()
-        #elif event.type != pygame.MOUSEBUTTONDOWN and event.button == 1:
-        #print("This your moment!")

@@ -11,9 +11,7 @@ def VectorIntersectLinesNotPoints(A, B, C, D):
         return False
     else:
         VectorU = ((C^(D-C))-(A^(D-C)))/Denom
-        print(VectorU)
         VectorV = ((A^(B-A))-(C^(B-A)))/-Denom
-        print(VectorV)
         if (0 < VectorU < 1) and (0 < VectorV < 1):
             return True
         else:
@@ -26,9 +24,7 @@ def VectorIntersectLinesAndPoints(A, B, C, D):
         return False
     else:
         VectorU = ((C^(D-C))-(A^(D-C)))/Denom
-        print(VectorU)
         VectorV = ((A^(B-A))-(C^(B-A)))/-Denom
-        print(VectorV)
         if (0 <= VectorU <= 1) and (0 <= VectorV <= 1):
             return True
         else:
@@ -48,7 +44,10 @@ def IsPointInTriangle(Point1, Point2, Point3, Point4):
     Orientation3 = (Point1 - Point3)^(Point4 - Point3)
     return ((Point2-Point1)^(Point3-Point1) > 0) and (Orientation1 > 0 and Orientation2 > 0 and Orientation3 > 0)
 
-
+def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
+    PointMax = Point(max(Point1.x, Point2.x, Point3.x, Point4.x), max(Point1.y, Point2.y, Point3.y, Point4.y))
+    PointMin = Point(min(Point1.x, Point2.x, Point3.x, Point4.x), min(Point1.y, Point2.y, Point3.y, Point4.y))
+    return (PointMin <= Point5 <= PointMax)
 
 # Map Class deals with all the Map creation Functions
 class Map():
@@ -56,15 +55,15 @@ class Map():
     def __init__(self, WorldSize):
         self.WorldSize = WorldSize
         self.Sector = 0
-        self.Sectors = {0: Sector(Point(0,0), Point(9, 0), Point(0, 9)), 1: Sector(Point(9, 0), Point(0, 9), Point(9, 9))}
+        self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(0,9), Point(9, 9))}
 
-        self.UserVectorCount = 0
-        self.UserVectors = SubVectorDecorator(self)
-        self.UserVectors.VectorIndex = 0
-        self.ComputerVectorCount = 0
-        self.ComputerVectors = SubVectorDecorator(self)
-        self.ComputerVectors.VectorIndex = 1
+
+        self.UserVectors = {}
+
+        self.ComputerVectors = {}
         self.Vectors = {}
+
+    # Check if a point is still inside a sector and if it is not find out where it is
     def StillInSector(self, RelativeMousePoint):
         if IsPointInTriangle(*self.Sectors[Sector], RelativeMousePoint) == False:
             for key, value in self.Sectors:
@@ -72,86 +71,29 @@ class Map():
             # TODO: REASSIGN SECTOR if value is in key
 
     def NewVector(self, NewVector):
-        self.ComputerVectors
-        self.UserVectors
-        self.UserVectors[self.UserVectorCount] = NewVector
-
-        ProposedVectorCount = self.ComputerVectorCount
+        # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
         ProposedVectorsDict = {}
-        ProposedVectorsDict.update(self.ComputerVectors)
-
-        # Create new vectors to point
         for VectorPointIndex in range(len(NewVector)):
-            # Create all proposed vectors for sector
-            ProposedVectorsList = list(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]))
-            VectorDict = dict(enumerate(ProposedVectorsList, start=ProposedVectorCount))
-            print("Values in VectorDict at creation", VectorDict)
-            for key in list(VectorDict.keys()):
-                # First check the Sectors and see if there is any intersections
-                Intersection = list(filter(lambda SectorVector: VectorIntersectLinesNotPoints(*SectorVector, *VectorDict[key]), self.UserVectors.values()))
-                if len(Intersection) > 0:
-                    del VectorDict[key]
-            print("Values in VectorDict at sector intersection", VectorDict)
-            for key in list(VectorDict.keys()):
-                # First check the Sectors and see if there is any intersections
-                Intersection = list(filter(lambda SectorVector: VectorIntersectLinesNotPoints(*SectorVector, *VectorDict[key]), self.Sectors[self.Sector].Vectors))
-                if len(Intersection) > 0:
-                    del VectorDict[key]
-            print("Values in VectorDict at sector intersection", VectorDict)
-            # So we've now checked if there are any conflicts with Sectors now to check for conflicts with any new Vectors we have created
-            VectorDict.update(ProposedVectorsDict)
+            # Create New Vectors going from the point to all points in Sector
+            ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
+            ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
 
-            for BlackKey in list(VectorDict.keys()):
-                blacklistdict = [WhiteValue for WhiteKey, WhiteValue in VectorDict.items() if WhiteKey != BlackKey]
-                print("With key", BlackKey, "we get the following dict", blacklistdict)
-                Intersection = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*VectorDict[BlackKey], *ProposedPoint), blacklistdict))
+        # Remove any intersecting Vectors
+        for BlackKey in list(ProposedVectorsDict.keys()):
+            # Create a list of ProposedVectorsDict that does not include BlackKey.
+            # This means we will not Intersect BlackKey with itself and try and delete it
+            blacklistdict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
+            Intersection = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*ProposedVectorsDict[BlackKey], *ProposedPoint), blacklistdict))
+            if len(Intersection) > 0:
+                del ProposedVectorsDict[BlackKey]
 
-                if len(Intersection) > 0:
-                    del VectorDict[BlackKey]
-
-            ProposedVectorCount += len(VectorDict)
-            print("Proposed Values in VectorDict at end of for loop", VectorDict)
-            ProposedVectorsDict = {**ProposedVectorsDict, **VectorDict}
-            print("ProposedVectorsDict at end of for loop", ProposedVectorsDict)
-        self.ComputerVectorCount += len(VectorDict)
-        ProposedVectorsDict = dict(enumerate(ProposedVectorsDict.values(), start=ProposedVectorCount))
-        print("Our proposed Vectors are: ", ProposedVectorsDict)
+        # Add NewVector to UserVectors and to Vectors
+        self.UserVectors[len(self.UserVectors)] = NewVector
+        self.Vectors[(0, len(self.UserVectors))]= NewVector
+        # Reindex ProposedVectorsDict and add to ComputerVectors
+        ProposedVectorsDict = dict(enumerate(ProposedVectorsDict.values(), start=len(self.ComputerVectors)))
         self.ComputerVectors.update(ProposedVectorsDict)
-
-        self.UserVectorCount += 1
+        self.Vectors.update(dict(((1, Key), Value) for Key, Value in ProposedVectorsDict.items()))
         #Return a dict of all new vectors created so we can blit them to Pygame LineSurface
-        return [NewVector] + list(ProposedVectorsDict.values())
-    # @property
-    # def UserVectors(self): return self._UserVectors
-    # @UserVectors.setter # TODO WORK OUT HOW TO DO THIS WITH DICTS
-    # def UserVectors(self, key, value):
-    #     self._UserVectors[key] = value
-    #     self._Vectors['UserVectors'][key] = value
-    #
-    # @property
-    # def ComputerVectors(self): return self._ComputerVectors
-    # @ComputerVectors.setter # TODO WORK OUT HOW TO DO THIS WITH DICTS
-    # def ComputerVectors(self, key, value):
-    #     self._ComputerVectors[key] = value
-    #     self._Vectors['ComputerVectors'][key] = value
-    #
-    # @property
-    # def Vectors(self):
-    #     return self._Vectors
 
-class  SubVectorDecorator(dict):
-    def __init__(self, parent):
-        self.LastParent = [parent]
-    def __getitem__(self, key):
-        return dict.__getitem__(self, key)
-    def __setitem__(self, key, value):
-        print("WE'VE BEEN CALLED")
-        self.LastParent[0].Vectors[(self.VectorIndex, key)] = value
-        dict.__setitem__(self, key, value)
-    def __delitem__(self, key):
-        del self.LastParent[(self.VectorIndex, key)]
-        dict.__delitem__(self, key)
-    """def update(self, *args):
-        self.LastParent.Vectors
-        dict.__update__(self, args)
-    """
+        return [NewVector] + list(ProposedVectorsDict.values())

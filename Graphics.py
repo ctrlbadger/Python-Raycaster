@@ -65,13 +65,11 @@ class Graphics():
         return FocusedPoint
     def DrawNewLines(self, VectorList, ScalingFactor, Offset):
         VectorRects = []
-        print(VectorList)
         for Vector in VectorList:
             ScaledVector1 = ((Vector[0] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector2 = ((Vector[1] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector1.PointToIntPoint()
             ScaledVector2.PointToIntPoint()
-            print(ScaledVector1, ScaledVector2)
 
             pygame.gfxdraw.line(self.LineSurface, *ScaledVector1, *ScaledVector2, pygame.Color('red'))
             SortX = sorted([ScaledVector1.x, ScaledVector2.x])

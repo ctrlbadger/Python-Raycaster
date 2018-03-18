@@ -15,7 +15,7 @@ class Point(list):
 
         if type(other) is self.__class__:
             return self.__class__(self[0] / other[0], self[1] / other[1])
-        if other is int or other is float:
+        if type(other) is int or other is float:
             return self.__class__(self[0]/other, self[1]/other)
     # Vector Dot Product for Point
     # Point Multiplication if anything else
@@ -42,7 +42,7 @@ class Point(list):
     def __ge__(self, other):
         return self[0] >= other[0] and self[1] >= other[1]
 
-    # Changes Point into int. Used for when drawing coordinates.    
+    # Changes Point into int. Used for when drawing coordinates.
     def PointToIntPoint(self):
         return self.__class__(int(self[0]), int(self[1]))
     @property
