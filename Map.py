@@ -132,18 +132,13 @@ class Map():
                                         NewSector = set([ProposedVectorsDict[BlackKey][(BlackKeyPointIndex + 1) % 2], *WhitelistDict[VectorIntersectionsIndex[0]]])
                                         if NewSector not in FoundSectors:
                                             FoundSectors.append(NewSector)
-        print(FoundSectors)
+
+        FoundSectors = list(map(lambda SetSector: Vector(*SetSector), FoundSectors))
+        for SectorKey, SectorPoint in dict(enumerate(FoundSectors, start=len(self.Sectors))).items():
+            print(SectorKey, SectorPoint)
+            if SectorPoint in self.PointTable:
+                self.PointTable[SectorPoint].append(SectorKey)
+            else:
+                self.PointTable[SectorPoint] = [SectorKey]
+        self.Sectors.update(enumerate(FoundSectors, start=len(self.Sectors)))
         return FoundSectors
-
-
-
-"""
-FoundSectors = list(map(lambda SetSector: Vector(*SetSector), FoundSectors))
-for SectorKey, SectorPoint in dict(enumerate(FoundSectors, start=len(self.Sectors))).items():
-    print(SectorKey, SectorPoint)
-    if SectorPoint in self.PointTable:
-        self.PointTable[SectorPoint].append(SectorKey)
-    else:
-        self.PointTable[SectorPoint] = [SectorKey]
-self.Sectors.update(enumerate(FoundSectors, start=len(self.Sectors)))
-"""
