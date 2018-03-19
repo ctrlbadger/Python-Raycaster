@@ -54,6 +54,10 @@ def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
     PointMin = Point(min(Point1.x, Point2.x, Point3.x, Point4.x), min(Point1.y, Point2.y, Point3.y, Point4.y))
     return (PointMin <= Point5 <= PointMax)
 
+def IsPointInSector(Sector, CheckPoint):
+    Orientations = [((Sector[Index] - Sector[(Index - 1) % len(Sector)])^(CheckPoint - Sector[(Index - 1) % len(Sector)])) for Index in range(len(Sector))]
+    return (((Sector[1]-Sector[0])^(Sector[2]-Sector[0])) < 0) and len(list(filter(lambda Orientation: Orientation >= 0, Orientions))) == 0
+
 # Map Class deals with all the Map creation Functions
 class Map():
     # Initialise Map with WorldSize a list of [width, height]
@@ -72,11 +76,9 @@ class Map():
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
 
     # Check if a point is still inside a sector and if it is not find out where it is
-    def StillInSector(self, RelativeMousePoint):
-        if IsPointInTriangle(*self.Sectors[Sector], RelativeMousePoint) == False:
-            for key, value in self.Sectors:
-                pass
-            # TODO: REASSIGN SECTOR if value is in key
+    def FindNewSector(self, CheckSector, CheckPoint):
+        for SectorIndex in range(len(self.Sectors)):
+            if IsPointInSector(self.Sectors[SectorIndex], CheckPoint): return SectorIndex
 
     def NewVector(self, NewVector):
         # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
@@ -112,6 +114,7 @@ class Map():
         FoundSectors = []
         for BlackKey in list(ProposedVectorsDict.keys()):
             WhitelistDict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
+            WhitelistDict.append(NewVector)
             for BlackKeyPointIndex, BlackKeyPoint in enumerate(ProposedVectorsDict[BlackKey]):
                 for WhitelistVector in WhitelistDict:
                     for WhitelistPoint in WhitelistVector:
@@ -131,3 +134,16 @@ class Map():
                                             FoundSectors.append(NewSector)
         print(FoundSectors)
         return FoundSectors
+
+
+
+"""
+FoundSectors = list(map(lambda SetSector: Vector(*SetSector), FoundSectors))
+for SectorKey, SectorPoint in dict(enumerate(FoundSectors, start=len(self.Sectors))).items():
+    print(SectorKey, SectorPoint)
+    if SectorPoint in self.PointTable:
+        self.PointTable[SectorPoint].append(SectorKey)
+    else:
+        self.PointTable[SectorPoint] = [SectorKey]
+self.Sectors.update(enumerate(FoundSectors, start=len(self.Sectors)))
+"""

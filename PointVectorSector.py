@@ -8,9 +8,15 @@ class Point(list):
         # Creates List with strings corresponding to Vectors
         self.VectorParents = []
     def __add__(self, other):
-        return self.__class__(self[0] + other[0], self[1] + other[1])
+        if type(other) is self.__class__:
+            return self.__class__(self[0] + other[0], self[1] + other[1])
+        else:
+            return self.__class__(self[0] + other, self[1] + other)
     def __sub__(self, other):
-        return self.__class__(self[0] - other[0], self[1] - other[1])
+        if type(other) is self.__class__:
+            return self.__class__(self[0] - other[0], self[1] - other[1])
+        else:
+            return self.__class__(self[0] - other, self[1] - other)
     def __truediv__(self, other):
 
         if type(other) is self.__class__:
@@ -105,6 +111,8 @@ class Vector(list):
 class Sector(list):
     def __init__(self, *args):
         super(Sector, self).__init__(args)
+    def __hash__(self):
+        return hash(tuple(self))
 
     @property
     def Vectors(self):
