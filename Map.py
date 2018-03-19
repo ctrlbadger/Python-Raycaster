@@ -23,9 +23,7 @@ def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
         return False
     else:
         t = ((Q-P)^S)/(R^S)
-        print(t)
         u = ((Q-P)^R)/(R^S)
-        print(u)
         return (0 < t < 1) and (0 < u < 1)
     # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
 
@@ -103,12 +101,21 @@ class Map():
             # Create New Vectors going from the point to all points in Sector
             ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
             ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
+        print("Unculled ProposedVectorsDict", ProposedVectorsDict)
 
+        """
+        IntersectionWithNewVector = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*NewVector, *ProposedVectorsDict[ProposedPoint]), list(ProposedVectorsDict.keys())))
+        print(IntersectionWithNewVector)
+        for Key in IntersectionWithNewVector:
+            del ProposedVectorsDict[Key]
+        """
         # Remove any intersecting Vectors
         for BlackKey in list(ProposedVectorsDict.keys()):
             # Create a list of ProposedVectorsDict that does not include BlackKey.
             # This means we will not Intersect BlackKey with itself and try and delete it
             blacklistdict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
+            blacklistdict.append(NewVector)
+
             Intersection = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*ProposedVectorsDict[BlackKey], *ProposedPoint), blacklistdict))
             if len(Intersection) > 0:
                 del ProposedVectorsDict[BlackKey]
@@ -121,6 +128,7 @@ class Map():
         self.ComputerVectors.update(ProposedVectorsDict)
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in ProposedVectorsDict.items()))
         #Return a dict of all new vectors created so we can blit them to Pygame LineSurface
+        print(ProposedVectorsDict)
         self.CalculateSectors(NewVector, ProposedVectorsDict)
         return [NewVector] + list(ProposedVectorsDict.values())
 

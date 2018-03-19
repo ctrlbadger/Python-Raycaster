@@ -16,7 +16,6 @@ VectorMap = Map(WorldSize)
 IsDragging = False
 while True:
     events = pygame.event.get()
-
     for event in events:
 
         if event.type == pygame.QUIT:
@@ -50,8 +49,6 @@ while True:
                 OriginalPoint = (graphics.LineDrag.Point1 + Offset) / ScaleFactor
                 GridX = int((GetPos.x + Offset.x)/ScaleFactor)
                 GridY = int((GetPos.y + Offset.y)/ScaleFactor)
-
-
                 # Create any new vectors that need to be created
                 NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY) ))
                 graphics.DrawNewLines(NewVectors, ScaleFactor, Offset)
