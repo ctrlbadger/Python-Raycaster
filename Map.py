@@ -5,30 +5,51 @@ from PointVectorSector import *
 
 # Check if Line AB and CD intersect, however will return false if the points intersect.
 # This is used for checking if Created Vectors in a sector intersect
-def VectorIntersectLinesNotPoints(A, B, C, D):
-    Denom = (B-A)^(D-C)
-    if Denom == 0:
+# https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+def Projection(A, B):
+    return (A.x * B.x) + (A.y*B.y)
+def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
+    R = (Ps-P)
+    S = (Qs-Q)
+    # Collinear
+    if R^S == 0 and (Q-P)^R == 0:
+        try:
+            t_zero = Projection((Q-P), R)/ Projection(R, R)
+            t_one = Projection((Q+S-P), R)/ Projection(R, R)
+            return (0 < t_zero < 1) or (0 < t_one < 1)
+        except:
+            return True
+    elif R^S == 0 and (Q-P)^R != 0:
         return False
     else:
-        VectorU = ((C^(D-C))-(A^(D-C)))/Denom
-        VectorV = ((A^(B-A))-(C^(B-A)))/-Denom
-        if (0 < VectorU < 1) and (0 < VectorV < 1):
-            return True
-        else:
-            return False
+        t = ((Q-P)^S)/(R^S)
+        print(t)
+        u = ((Q-P)^R)/(R^S)
+        print(u)
+        return (0 < t < 1) and (0 < u < 1)
+    # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+
+print(VectorIntersectLinesNotPoints(Point(0, 0), Point(4, 4), Point(3, 4), Point(4, 4)))
+print(VectorIntersectLinesNotPoints(Point(1, 1), Point(1, 5), Point(1, 4), Point(1, 9)))
+
 # Check if Line AB and CD intersect
 # Used in the Actual Raycasting to check how far points are away
 def VectorIntersectLinesAndPoints(A, B, C, D):
     Denom = (B-A)^(D-C)
     if Denom == 0:
-        return False
+        if (C-A)<=(B-A) or (D-A)<=(B-A):
+            return True
+        else:
+            return False
     else:
+
         VectorU = ((C^(D-C))-(A^(D-C)))/Denom
         VectorV = ((A^(B-A))-(C^(B-A)))/-Denom
         if (0 <= VectorU <= 1) and (0 <= VectorV <= 1):
             return True
         else:
             return False
+
 
 # Checks if the Triangle created by Point1, Point2 and Point3 Intersect
 # NOTE: Don't know if this works or not as haven't tried it but in principle it should
@@ -39,14 +60,9 @@ def IsTriangleClockwise(Point1, Point2, Point3):
 # Check if Point4 is in Triangle bounded by Point1, Point2, Point3
 # Used to check if a point is in a given sector
 def IsPointInTriangle(Point1, Point2, Point3, Point4):
-    print()
     Orientation1 = (Point2 - Point1)^(Point4 - Point1)
-    print(Orientation1)
     Orientation2 = (Point3 - Point2)^(Point4 - Point2)
-    print(Orientation2)
     Orientation3 = (Point1 - Point3)^(Point4 - Point3)
-    print(Orientation3)
-    print((Point2-Point1)^(Point3-Point1))
     return ((Point2-Point1)^(Point3-Point1) < 0) and (Orientation1 < 0 and Orientation2 < 0 and Orientation3 < 0)
 
 def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
@@ -126,11 +142,15 @@ class Map():
                                     VectorIntersectionsIndex = [i for i, x in enumerate(VectorIntersections) if x]
                                     if len(VectorIntersectionsIndex) == 0:
                                         NewSector = set([*ProposedVectorsDict[BlackKey], WhitelistPoint])
+                                        print("Standard Sector", NewSector)
                                         if NewSector not in FoundSectors:
+
                                             FoundSectors.append(NewSector)
                                     else:
                                         NewSector = set([ProposedVectorsDict[BlackKey][(BlackKeyPointIndex + 1) % 2], *WhitelistDict[VectorIntersectionsIndex[0]]])
+                                        print("Non Standard Sector", NewSector)
                                         if NewSector not in FoundSectors:
+
                                             FoundSectors.append(NewSector)
 
         FoundSectors = list(map(lambda SetSector: Vector(*SetSector), FoundSectors))
