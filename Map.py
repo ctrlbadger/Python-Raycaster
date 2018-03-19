@@ -125,19 +125,24 @@ class Map():
         return [NewVector] + list(ProposedVectorsDict.values())
 
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
+        ProposedVectorSets = list(map(lambda Points: set(*Points), ProposedVectorsDict.values()))
         FoundSectors = []
+
+        # Find Sectors bounded by a sector wall and a point in the NewVector
         for NewPoint in NewVector:
-            Intersection = list(filter(lambda VectorPoint1, VectorPoint2: (set(VectorPoint1, NewPoint) in ProposedVectorsDict.values()) and (set(VectorPoint2, NewPoint) in ProposedVectorsDict.values()), *self.Sectors[self.Sector].Vectors))
+            Intersection = list(filter(lambda VectorPoint1, VectorPoint2: (set(VectorPoint1, NewPoint) in ProposedVectorSets) and (set(VectorPoint2, NewPoint) in ProposedVectorSets), *self.Sectors[self.Sector].Vectors))
             for Index in Intersection:
                 NewSector = set(*self.Sectors[self.Sector].Vectors[Index], NewPoint)
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
+        # Find Sectors bounded by NewVector and a sector point
         for SectorPoint in self.Sectors[self.Sector]:
-            Intersection = list(filter(lambda NewPoint1, NewPoint2: (set(SectorPoint, NewPoint1) in ProposedVectorsDict.values()) and (set(SectorPoint, NewPoint2) in ProposedVectorsDict.values()), *NewVector))
+            Intersection = list(filter(lambda NewPoint1, NewPoint2: (set(SectorPoint, NewPoint1) in ProposedVectorSets) and (set(SectorPoint, NewPoint2) in ProposedVectorSets), *NewVector))
             for Index in Intersection:
                 NewSector = set(*NewVector[Index], SectorPoint)
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
+        #
         for SectorKey, SectorPoint in enumerate(FoundSectors, start=len(self.Sectors))):
             if SectorPoint in self.PointTable:
                 self.PointTable[SectorPoint].append(SectorKey)
