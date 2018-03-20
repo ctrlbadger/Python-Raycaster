@@ -125,37 +125,25 @@ class Map():
         return [NewVector] + list(ProposedVectorsDict.values())
 
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
-        # If two sides of a vector are in a point table with the same sector number and if we can find a vector vector with those points
-        # Then we can define a sector
+        ProposedVectorSets = list(map(lambda Points: set(*Points), ProposedVectorsDict.values()))
         FoundSectors = []
-        for BlackKey in list(ProposedVectorsDict.keys()):
-            WhitelistDict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
-            WhitelistDict.append(NewVector)
-            for BlackKeyPointIndex, BlackKeyPoint in enumerate(ProposedVectorsDict[BlackKey]):
-                for WhitelistVector in WhitelistDict:
-                    for WhitelistPoint in WhitelistVector:
-                        if WhitelistPoint in self.PointTable and BlackKeyPoint in self.PointTable:
-                            Intersection = list(set(self.PointTable[WhitelistPoint]).intersection(self.PointTable[BlackKeyPoint]))
-                            for SectorIndex in Intersection:
-                                if Vector(WhitelistPoint, BlackKeyPoint) in self.Sectors[SectorIndex].Vectors or Vector(WhitelistPoint, BlackKeyPoint) in self.Sectors[SectorIndex].Vectors:
-                                    VectorIntersections = list(map(lambda IntersectedVector: VectorIntersectLinesNotPoints(ProposedVectorsDict[BlackKey][(BlackKeyPointIndex + 1) % 2], WhitelistPoint, *IntersectedVector), WhitelistDict))
-                                    VectorIntersectionsIndex = [i for i, x in enumerate(VectorIntersections) if x]
-                                    if len(VectorIntersectionsIndex) == 0:
-                                        NewSector = set([*ProposedVectorsDict[BlackKey], WhitelistPoint])
-                                        print("Standard Sector", NewSector)
-                                        if NewSector not in FoundSectors:
 
-                                            FoundSectors.append(NewSector)
-                                    else:
-                                        NewSector = set([ProposedVectorsDict[BlackKey][(BlackKeyPointIndex + 1) % 2], *WhitelistDict[VectorIntersectionsIndex[0]]])
-                                        print("Non Standard Sector", NewSector)
-                                        if NewSector not in FoundSectors:
-
-                                            FoundSectors.append(NewSector)
-
-        FoundSectors = list(map(lambda SetSector: Vector(*SetSector), FoundSectors))
-        for SectorKey, SectorPoint in dict(enumerate(FoundSectors, start=len(self.Sectors))).items():
-            print(SectorKey, SectorPoint)
+        # Find Sectors bounded by a sector wall and a point in the NewVector
+        for NewPoint in NewVector:
+            Intersection = list(filter(lambda VectorPoint1, VectorPoint2: (set(VectorPoint1, NewPoint) in ProposedVectorSets) and (set(VectorPoint2, NewPoint) in ProposedVectorSets), *self.Sectors[self.Sector].Vectors))
+            for Index in Intersection:
+                NewSector = set(*self.Sectors[self.Sector].Vectors[Index], NewPoint)
+                if NewSector not in FoundSectors:
+                    FoundSectors.append(NewSector)
+        # Find Sectors bounded by NewVector and a sector point
+        for SectorPoint in self.Sectors[self.Sector]:
+            Intersection = list(filter(lambda NewPoint1, NewPoint2: (set(SectorPoint, NewPoint1) in ProposedVectorSets) and (set(SectorPoint, NewPoint2) in ProposedVectorSets), *NewVector))
+            for Index in Intersection:
+                NewSector = set(*NewVector[Index], SectorPoint)
+                if NewSector not in FoundSectors:
+                    FoundSectors.append(NewSector)
+        #
+        for SectorKey, SectorPoint in enumerate(FoundSectors, start=len(self.Sectors))):
             if SectorPoint in self.PointTable:
                 self.PointTable[SectorPoint].append(SectorKey)
             else:
