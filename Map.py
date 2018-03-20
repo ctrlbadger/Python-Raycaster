@@ -64,13 +64,17 @@ def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
     PointMin = Point(min(Point1.x, Point2.x, Point3.x, Point4.x), min(Point1.y, Point2.y, Point3.y, Point4.y))
     return (PointMin <= Point5 <= PointMax)
 
-def IsPointInSectorAndPoints(Sector, CheckPoint):
-    Orientations = [((Sector[Index] - Sector[(Index - 1) % len(Sector)])^(CheckPoint - Sector[(Index - 1) % len(Sector)])) for Index in range(len(Sector))]
-    return (((Sector[1]-Sector[0])^(Sector[2]-Sector[0])) < 0) and len(list(filter(lambda Orientation: Orientation >= 0, Orientation))) == 0
+def IsPointInSectorAndPoints(Sector1, CheckPoint):
 
-def IsPointInSectorNotPoints(Sector, CheckPoint):
-    Orientations = [((Sector[Index] - Sector[(Index - 1) % len(Sector)])^(CheckPoint - Sector[(Index - 1) % len(Sector)])) for Index in range(len(Sector))]
-    if (((Sector[1]-Sector[0])^(Sector[2]-Sector[0])) < 0):
+    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)])^(CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
+    if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
+        return  len(list(filter(lambda Orientation: Orientation > 0, Orientations))) == 0
+    else:
+        return  len(list(filter(lambda Orientation: Orientation < 0, Orientations))) == 0
+
+def IsPointInSectorNotPoints(Sector1, CheckPoint):
+    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)])^(CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
+    if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
         return  len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
     else:
         return  len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
@@ -91,12 +95,25 @@ class Map():
         self.ComputerVectors = {0: Point(0, 0), 1: Point(9,0), 2: Point(0,9), 3: Point(9, 9)}
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
 
-    # Check if a point is still inside a sector and if it is not find out where it is
+    # Try and locate a point, will search any sectors around it and then every sector. Yes I know it's not that efficient
     def FindNewSector(self, CheckSector, CheckPoint):
-        for SectorIndex in range(len(self.Sectors)):
-            if IsPointInSector(self.Sectors[SectorIndex], CheckPoint): return SectorIndex
+        # Find all adjacent sectors
+        TablePoints = [PointTable[CheckSectorPoint] for CheckSectorPoint in self.Sectors[CheckSector]]
+        NewSet =  set([item for sublist in TablePoints for item in sublist]) - set(CheckSector)
+        # Check if point is in Adjacent sectors
+        for PossibleSector in list(NewSet):
+            print("PossibleSector", PossibleSector)
+            if IsPointInSectorAndPoints(self.Sectors[PossibleSectors], CheckPoint): return PossibleSectors
+
+        #Huh that's odd guess we are going to have to go on a goose chase to find this one
+        for PossibleSector in self.Sectors.values():
+            if IsPointInSectorAndPoints(self.Sectors[PossibleSectors]): return PossibleSectors
+        #Might be out of range so best to leave it alone
+        return CheckSector
 
     def NewVector(self, NewVector):
+        if not IsPointInSectorAndPoints(self.Sectors[self.Sector], NewVector[0]):
+            self.Sector = FindNewSector(self.Sector, NewVector[0])
         # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
         ProposedVectorsDict = {}
         for VectorPointIndex in range(len(NewVector)):
@@ -104,12 +121,6 @@ class Map():
             ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
             ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
 
-        """
-        IntersectionWithNewVector = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*NewVector, *ProposedVectorsDict[ProposedPoint]), list(ProposedVectorsDict.keys())))
-        print(IntersectionWithNewVector)
-        for Key in IntersectionWithNewVector:
-            del ProposedVectorsDict[Key]
-        """
         # Remove any intersecting Vectors
         for BlackKey in list(ProposedVectorsDict.keys()):
             # Create a list of ProposedVectorsDict that does not include BlackKey.
@@ -133,6 +144,8 @@ class Map():
         return [NewVector] + list(ProposedVectorsDict.values())
 
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
+
+
         ProposedVectorSets = list(map(lambda ProposedVectors: set(ProposedVectors), list(ProposedVectorsDict.values())))
         print(ProposedVectorSets)
         FoundSectors = []
@@ -156,6 +169,11 @@ class Map():
             print(FoundSectors[FoundSectors.index(Index)])
             del FoundSectors[FoundSectors.index(Index)]
 
+        # Now to remove current sector from the PointTable and remove it from dict of Sectors
+        for OldSectorPoint in self.Sectors[self.Sector]:
+            self.PointTable[OldSectorPoint].remove(self.Sector)
+        del self.Sectors[self.Sector]
+
         FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors)))
 
         for SectorKey, FoundSector in FoundDict.items():
@@ -164,6 +182,8 @@ class Map():
                     self.PointTable[SectorPoint].append(SectorKey)
                 else:
                     self.PointTable[SectorPoint] = [SectorKey]
+
+
         print(FoundSectors)
         self.Sectors.update(FoundDict)
         return FoundSectors
