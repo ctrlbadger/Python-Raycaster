@@ -28,10 +28,6 @@ def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
         print(u)
         return (0 < t < 1) and (0 < u < 1)
     # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
-
-print(VectorIntersectLinesNotPoints(Point(0, 0), Point(4, 4), Point(3, 4), Point(4, 4)))
-print(VectorIntersectLinesNotPoints(Point(1, 1), Point(1, 5), Point(1, 4), Point(1, 9)))
-
 # Check if Line AB and CD intersect
 # Used in the Actual Raycasting to check how far points are away
 def VectorIntersectLinesAndPoints(A, B, C, D):
@@ -70,10 +66,17 @@ def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
     PointMin = Point(min(Point1.x, Point2.x, Point3.x, Point4.x), min(Point1.y, Point2.y, Point3.y, Point4.y))
     return (PointMin <= Point5 <= PointMax)
 
-def IsPointInSector(Sector, CheckPoint):
+def IsPointInSectorAndPoints(Sector, CheckPoint):
     Orientations = [((Sector[Index] - Sector[(Index - 1) % len(Sector)])^(CheckPoint - Sector[(Index - 1) % len(Sector)])) for Index in range(len(Sector))]
-    return (((Sector[1]-Sector[0])^(Sector[2]-Sector[0])) < 0) and len(list(filter(lambda Orientation: Orientation >= 0, Orientions))) == 0
+    return (((Sector[1]-Sector[0])^(Sector[2]-Sector[0])) < 0) and len(list(filter(lambda Orientation: Orientation >= 0, Orientation))) == 0
 
+def IsPointInSectorNotPoints(Sector, CheckPoint):
+    Orientations = [((Sector[Index] - Sector[(Index - 1) % len(Sector)])^(CheckPoint - Sector[(Index - 1) % len(Sector)])) for Index in range(len(Sector))]
+    if (((Sector[1]-Sector[0])^(Sector[2]-Sector[0])) < 0):
+        return  len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
+    else:
+        return  len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
+#print(IsPointInSectorNotPoints(Sector(Point(0, 2), Point(2, 0), Point(2, 2)), Point(1.5, 1.5)))
 # Map Class deals with all the Map creation Functions
 class Map():
     # Initialise Map with WorldSize a list of [width, height]
@@ -86,7 +89,7 @@ class Map():
         self.ComputerVectors = {}
 
         # Just going to hard code in the First sector might channge it later
-        self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(0,9), Point(9, 9))}
+        self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(9, 9), Point(0,9))}
         self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
         self.ComputerVectors = {0: Point(0, 0), 1: Point(9,0), 2: Point(0,9), 3: Point(9, 9)}
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
@@ -125,28 +128,48 @@ class Map():
         return [NewVector] + list(ProposedVectorsDict.values())
 
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
-        ProposedVectorSets = list(map(lambda Points: set(*Points), ProposedVectorsDict.values()))
+        ProposedVectorSets = list(map(lambda ProposedVectors: set(ProposedVectors), list(ProposedVectorsDict.values())))
+        print(ProposedVectorSets)
         FoundSectors = []
 
         # Find Sectors bounded by a sector wall and a point in the NewVector
         for NewPoint in NewVector:
-            Intersection = list(filter(lambda VectorPoint1, VectorPoint2: (set(VectorPoint1, NewPoint) in ProposedVectorSets) and (set(VectorPoint2, NewPoint) in ProposedVectorSets), *self.Sectors[self.Sector].Vectors))
+            print("\n", NewPoint)
+            print(self.Sectors[self.Sector].Vectors)
+            Intersection = list(filter(lambda VectorPoint: ((set((VectorPoint[0], NewPoint)) in ProposedVectorSets) and (set((VectorPoint[1], NewPoint)) in ProposedVectorSets)), self.Sectors[self.Sector].Vectors))
+            print(Intersection)
             for Index in Intersection:
-                NewSector = set(*self.Sectors[self.Sector].Vectors[Index], NewPoint)
+                NewSector = set((*self.Sectors[self.Sector].Vectors[self.Sectors[self.Sector].Vectors.index(Index)], NewPoint))
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
+        print("Found Sectors from Sector lookup", FoundSectors)
         # Find Sectors bounded by NewVector and a sector point
         for SectorPoint in self.Sectors[self.Sector]:
-            Intersection = list(filter(lambda NewPoint1, NewPoint2: (set(SectorPoint, NewPoint1) in ProposedVectorSets) and (set(SectorPoint, NewPoint2) in ProposedVectorSets), *NewVector))
+            Intersection = list(filter(lambda NewPoint: (set((SectorPoint, NewPoint[0])) in ProposedVectorSets) and (set((SectorPoint, NewPoint[1])) in ProposedVectorSets), NewVector))
             for Index in Intersection:
-                NewSector = set(*NewVector[Index], SectorPoint)
+                NewSector = set((*NewVector[self.Sectors[self.Sector].Vectors.index(Index)], SectorPoint))
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
-        #
-        for SectorKey, SectorPoint in enumerate(FoundSectors, start=len(self.Sectors))):
-            if SectorPoint in self.PointTable:
-                self.PointTable[SectorPoint].append(SectorKey)
-            else:
-                self.PointTable[SectorPoint] = [SectorKey]
-        self.Sectors.update(enumerate(FoundSectors, start=len(self.Sectors)))
+        """
+        PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
+        for Index in PointInSector:
+            print(FoundSectors[PointInSector.index(Index)])
+            del FoundSectors[PointInSector.index(Index)]
+        """
+        PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
+        for Index in PointInSector:
+            print(FoundSectors[FoundSectors.index(Index)])
+            del FoundSectors[FoundSectors.index(Index)]
+
+        FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors)))
+
+        print("Found Sectors from NewVector lookup", FoundSectors)
+        for SectorKey, FoundSector in FoundDict.items():
+            for SectorPoint in FoundSector:
+                if SectorPoint in self.PointTable:
+                    self.PointTable[SectorPoint].append(SectorKey)
+                else:
+                    self.PointTable[SectorPoint] = [SectorKey]
+        print(FoundSectors)
+        self.Sectors.update(FoundDict)
         return FoundSectors

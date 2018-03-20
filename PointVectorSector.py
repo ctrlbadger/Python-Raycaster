@@ -116,8 +116,7 @@ class Sector(list):
 
     @property
     def Vectors(self):
-        #return [Vector(self[0], self[1]), Vector(self[1], self[2]), Vector(self[2], self[0])]
-        return [Vector(self[Index], self[(Index+1) % 2]) for Index in range(len(self))]
+        return [Vector(self[Index], self[(Index+1) % len(self)]) for Index in range(len(self))]
     @property
     def Point1(self): return self[0]
     @Point1.setter
