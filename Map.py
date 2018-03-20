@@ -74,7 +74,6 @@ def IsPointInSectorNotPoints(Sector, CheckPoint):
         return  len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
     else:
         return  len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
-#print(IsPointInSectorNotPoints(Sector(Point(0, 2), Point(2, 0), Point(2, 2)), Point(1.5, 1.5)))
 # Map Class deals with all the Map creation Functions
 class Map():
     # Initialise Map with WorldSize a list of [width, height]
@@ -104,7 +103,6 @@ class Map():
             # Create New Vectors going from the point to all points in Sector
             ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
             ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
-        print("Unculled ProposedVectorsDict", ProposedVectorsDict)
 
         """
         IntersectionWithNewVector = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*NewVector, *ProposedVectorsDict[ProposedPoint]), list(ProposedVectorsDict.keys())))
@@ -131,7 +129,6 @@ class Map():
         self.ComputerVectors.update(ProposedVectorsDict)
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in ProposedVectorsDict.items()))
         #Return a dict of all new vectors created so we can blit them to Pygame LineSurface
-        print(ProposedVectorsDict)
         self.CalculateSectors(NewVector, ProposedVectorsDict)
         return [NewVector] + list(ProposedVectorsDict.values())
 
@@ -142,28 +139,18 @@ class Map():
 
         # Find Sectors bounded by a sector wall and a point in the NewVector
         for NewPoint in NewVector:
-            print("\n", NewPoint)
-            print(self.Sectors[self.Sector].Vectors)
             Intersection = list(filter(lambda VectorPoint: ((set((VectorPoint[0], NewPoint)) in ProposedVectorSets) and (set((VectorPoint[1], NewPoint)) in ProposedVectorSets)), self.Sectors[self.Sector].Vectors))
-            print(Intersection)
             for Index in Intersection:
                 NewSector = set((*self.Sectors[self.Sector].Vectors[self.Sectors[self.Sector].Vectors.index(Index)], NewPoint))
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
-        print("Found Sectors from Sector lookup", FoundSectors)
         # Find Sectors bounded by NewVector and a sector point
         for SectorPoint in self.Sectors[self.Sector]:
-            Intersection = list(filter(lambda NewPoint: (set((SectorPoint, NewPoint[0])) in ProposedVectorSets) and (set((SectorPoint, NewPoint[1])) in ProposedVectorSets), NewVector))
-            for Index in Intersection:
-                NewSector = set((*NewVector[self.Sectors[self.Sector].Vectors.index(Index)], SectorPoint))
+            if (set((SectorPoint, NewVector[0])) in ProposedVectorSets) and (set((SectorPoint, NewVector[1])) in ProposedVectorSets):
+                NewSector = set((*NewVector, SectorPoint))
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
-        """
-        PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
-        for Index in PointInSector:
-            print(FoundSectors[PointInSector.index(Index)])
-            del FoundSectors[PointInSector.index(Index)]
-        """
+
         PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
         for Index in PointInSector:
             print(FoundSectors[FoundSectors.index(Index)])
@@ -171,7 +158,6 @@ class Map():
 
         FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors)))
 
-        print("Found Sectors from NewVector lookup", FoundSectors)
         for SectorKey, FoundSector in FoundDict.items():
             for SectorPoint in FoundSector:
                 if SectorPoint in self.PointTable:
