@@ -98,22 +98,26 @@ class Map():
     # Try and locate a point, will search any sectors around it and then every sector. Yes I know it's not that efficient
     def FindNewSector(self, CheckSector, CheckPoint):
         # Find all adjacent sectors
-        TablePoints = [PointTable[CheckSectorPoint] for CheckSectorPoint in self.Sectors[CheckSector]]
-        NewSet =  set([item for sublist in TablePoints for item in sublist]) - set(CheckSector)
+        AdjacentSectors = [self.PointTable[CheckSectorPoint] for CheckSectorPoint in self.Sectors[CheckSector]]
+        print(AdjacentSectors)
+        # NewSet =  set([item for sublist in AdjacentSectorsIndex for item in sublist]) - set(CheckSector)
+        NewSet = set([item for items in AdjacentSectors for item in items]) - set(CheckPoint)
+
         # Check if point is in Adjacent sectors
         for PossibleSector in list(NewSet):
             print("PossibleSector", PossibleSector)
-            if IsPointInSectorAndPoints(self.Sectors[PossibleSectors], CheckPoint): return PossibleSectors
+            if IsPointInSectorAndPoints(self.Sectors[PossibleSector], CheckPoint): return PossibleSector
 
         #Huh that's odd guess we are going to have to go on a goose chase to find this one
-        for PossibleSector in self.Sectors.values():
-            if IsPointInSectorAndPoints(self.Sectors[PossibleSectors]): return PossibleSectors
+        for PossibleSector in self.Sectors.keys():
+            if IsPointInSectorAndPoints(self.Sectors[PossibleSector]): return PossibleSector
         #Might be out of range so best to leave it alone
         return CheckSector
 
     def NewVector(self, NewVector):
+
         if not IsPointInSectorAndPoints(self.Sectors[self.Sector], NewVector[0]):
-            self.Sector = FindNewSector(self.Sector, NewVector[0])
+            self.Sector = self.FindNewSector(self.Sector, NewVector[0])
         # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
         ProposedVectorsDict = {}
         for VectorPointIndex in range(len(NewVector)):
@@ -144,10 +148,7 @@ class Map():
         return [NewVector] + list(ProposedVectorsDict.values())
 
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
-
-
         ProposedVectorSets = list(map(lambda ProposedVectors: set(ProposedVectors), list(ProposedVectorsDict.values())))
-        print(ProposedVectorSets)
         FoundSectors = []
 
         # Find Sectors bounded by a sector wall and a point in the NewVector
@@ -166,14 +167,14 @@ class Map():
 
         PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
         for Index in PointInSector:
-            print(FoundSectors[FoundSectors.index(Index)])
+
             del FoundSectors[FoundSectors.index(Index)]
 
         # Now to remove current sector from the PointTable and remove it from dict of Sectors
         for OldSectorPoint in self.Sectors[self.Sector]:
             self.PointTable[OldSectorPoint].remove(self.Sector)
         del self.Sectors[self.Sector]
-
+        FoundSectors = list(map(lambda FoundSector: Sector(*FoundSector), FoundSectors))
         FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors)))
 
         for SectorKey, FoundSector in FoundDict.items():
@@ -184,6 +185,6 @@ class Map():
                     self.PointTable[SectorPoint] = [SectorKey]
 
 
-        print(FoundSectors)
+
         self.Sectors.update(FoundDict)
         return FoundSectors
