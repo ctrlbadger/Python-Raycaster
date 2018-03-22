@@ -4,7 +4,6 @@ import math
 class Point(list):
     def __init__(self, *args):
         super(Point, self).__init__(args)
-        self._y = self[1]
         # Creates List with strings corresponding to Vectors
         self.VectorParents = []
     def __add__(self, other):

@@ -110,7 +110,7 @@ class Map():
 
         #Huh that's odd guess we are going to have to go on a goose chase to find this one
         for PossibleSector in self.Sectors.keys():
-            if IsPointInSectorAndPoints(self.Sectors[PossibleSector]): return PossibleSector
+            if IsPointInSectorAndPoints(self.Sectors[PossibleSector], CheckPoint): return PossibleSector
         #Might be out of range so best to leave it alone
         return CheckSector
 
