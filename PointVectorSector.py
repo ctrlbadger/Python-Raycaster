@@ -4,23 +4,27 @@ import math
 class Point(list):
     def __init__(self, *args):
         super(Point, self).__init__(args)
-        # Creates List with strings corresponding to Vectors
-        self.VectorParents = []
+
     def __add__(self, other):
         if type(other) is self.__class__:
             return self.__class__(self[0] + other[0], self[1] + other[1])
         else:
             return self.__class__(self[0] + other, self[1] + other)
+
     def __sub__(self, other):
         if type(other) is self.__class__:
             return self.__class__(self[0] - other[0], self[1] - other[1])
         else:
             return self.__class__(self[0] - other, self[1] - other)
+
+    # Division Operator divides both coordinates by scalar or by respective coordinates if other Point
+    # Shouldn't really be needed
     def __truediv__(self, other):
         if type(other) is self.__class__:
             return self.__class__(self[0] / other[0], self[1] / other[1])
         if type(other) is int or other is float:
             return self.__class__(self[0]/other, self[1]/other)
+    
     # Vector Dot Product for Point
     # Point Multiplication if anything else
     def __mul__(self, other):

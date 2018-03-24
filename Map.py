@@ -63,11 +63,6 @@ def IsPointInTriangle(Point1, Point2, Point3, Point4):
     Orientation3 = (Point1 - Point3)^(Point4 - Point3)
     return ((Point2-Point1)^(Point3-Point1) < 0) and (Orientation1 < 0 and Orientation2 < 0 and Orientation3 < 0)
 
-def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
-    PointMax = Point(max(Point1.x, Point2.x, Point3.x, Point4.x), max(Point1.y, Point2.y, Point3.y, Point4.y))
-    PointMin = Point(min(Point1.x, Point2.x, Point3.x, Point4.x), min(Point1.y, Point2.y, Point3.y, Point4.y))
-    return (PointMin <= Point5 <= PointMax)
-
 
 # Checks if a Point is in a Sector, also checks the lines bounded by the Sector
 def IsPointInSectorAndPoints(Sector1, CheckPoint):
@@ -101,7 +96,7 @@ class Map():
         # Just going to hard code in the First sector might channge it later
         self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(9, 9), Point(0,9))}
         self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
-        self.ComputerVectors = {0: Point(0, 0), 1: Point(9,0), 2: Point(0,9), 3: Point(9, 9)}
+        self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
 
     # Try and locate a point, will search any sectors around it and then every sector. Yes I know it's not that efficient
@@ -148,14 +143,17 @@ class Map():
         # Add NewVector to UserVectors and to Vectors
         self.UserVectors[len(self.UserVectors)] = NewVector
         self.Vectors[(0, len(self.UserVectors))]= NewVector
+
         # Reindex ProposedVectorsDict and add to ComputerVectors
         ProposedVectorsDict = dict(enumerate(ProposedVectorsDict.values(), start=len(self.ComputerVectors)))
         self.ComputerVectors.update(ProposedVectorsDict)
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in ProposedVectorsDict.items()))
+
         #Return a dict of all new vectors created so we can blit them to Pygame LineSurface
         self.CalculateSectors(NewVector, ProposedVectorsDict)
         return [NewVector] + list(ProposedVectorsDict.values())
 
+    # Create new Sectors from new vector and the proposed computer vectors created from it
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
         ProposedVectorSets = list(map(lambda ProposedVectors: set(ProposedVectors), list(ProposedVectorsDict.values())))
         FoundSectors = []
@@ -167,6 +165,7 @@ class Map():
                 NewSector = set((*self.Sectors[self.Sector].Vectors[self.Sectors[self.Sector].Vectors.index(Index)], NewPoint))
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
+        
         # Find Sectors bounded by NewVector and a sector point
         for SectorPoint in self.Sectors[self.Sector]:
             if (set((SectorPoint, NewVector[0])) in ProposedVectorSets) and (set((SectorPoint, NewVector[1])) in ProposedVectorSets):
@@ -174,9 +173,9 @@ class Map():
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
 
+        # Remove any sectors that have NewVector Points in them as this would overlap
         PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
         for Index in PointInSector:
-
             del FoundSectors[FoundSectors.index(Index)]
 
         # Now to remove current sector from the PointTable and remove it from dict of Sectors
@@ -186,6 +185,7 @@ class Map():
         FoundSectors = list(map(lambda FoundSector: Sector(*FoundSector), FoundSectors))
         FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors)))
 
+        # Add new Points and Sectors to Point Table
         for SectorKey, FoundSector in FoundDict.items():
             for SectorPoint in FoundSector:
                 if SectorPoint in self.PointTable:
