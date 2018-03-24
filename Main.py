@@ -1,8 +1,9 @@
 import pygame
-from PointVectorSector import *
+import pygame.gfxdraw
+
 from Graphics import *
 from Map import *
-import pygame.gfxdraw
+from PointVectorSector import *
 
 graphics = Graphics([1000, 1000])
 
@@ -26,7 +27,7 @@ while True:
         if event.type == pygame.MOUSEMOTION:
             graphics.MouseSprite.ChangeText(str(pygame.mouse.get_pos()), pygame.Color('black'))
             graphics.IsMouseOverGrid(10)
-            if IsDragging == True:
+            if IsDragging:
                 graphics.LineDrag.UpdatePoint2(Point(*pygame.mouse.get_pos()))
             graphics.DrawSprites()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -50,7 +51,7 @@ while True:
                 GridX = int((GetPos.x + Offset.x)/ScaleFactor)
                 GridY = int((GetPos.y + Offset.y)/ScaleFactor)
                 # Create any new vectors that need to be created
-                NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY) ))
+                NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY)))
                 graphics.DrawNewLines(NewVectors, ScaleFactor, Offset)
 
             graphics.DirtySprites.remove(graphics.DotDragSprites)

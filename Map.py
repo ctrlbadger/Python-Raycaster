@@ -1,37 +1,41 @@
-import pygame
-import math
 from PointVectorSector import *
 
 
 # Check if Line AB and CD intersect, however will return false if the points intersect.
 # This is used for checking if Created Vectors in a sector intersect
 # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+
+# I actually think this is the Dot Cross Product
 def Projection(A, B):
     return (A.x * B.x) + (A.y*B.y)
+
+
 def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
     R = (Ps-P)
     S = (Qs-Q)
     # Collinear
-    if R^S == 0 and (Q-P)^R == 0:
+    if R ^ S == 0 and (Q-P) ^ R == 0:
         try:
-            t_zero = Projection((Q-P), R)/ Projection(R, R)
-            t_one = Projection((Q+S-P), R)/ Projection(R, R)
+            # Check if both vectors each other
+            t_zero = Projection((Q-P), R) / Projection(R, R)
+            t_one = Projection((Q+S-P), R) / Projection(R, R)
             return (0 < t_zero < 1) or (0 < t_one < 1)
-        except:
+        except ZeroDivisionError:
             return True
-    elif R^S == 0 and (Q-P)^R != 0:
+    # Parallel but not collinear
+    elif R ^ S == 0 and (Q-P) ^ R != 0:
         return False
     else:
-        t = ((Q-P)^S)/(R^S)
-        u = ((Q-P)^R)/(R^S)
+        t = ((Q-P) ^ S)/(R ^ S)
+        u = ((Q-P) ^ R)/(R ^ S)
         return (0 < t < 1) and (0 < u < 1)
-    # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+
 # Check if Line AB and CD intersect
 # Used in the Actual Raycasting to check how far points are away
 def VectorIntersectLinesAndPoints(A, B, C, D):
     Denom = (B-A)^(D-C)
     if Denom == 0:
-        if (C-A)<=(B-A) or (D-A)<=(B-A):
+        if (C-A) <= (B-A) or (D-A) <= (B-A):
             return True
         else:
             return False
@@ -64,20 +68,25 @@ def IsPointInRectangle(Point1, Point2, Point3, Point4, Point5):
     PointMin = Point(min(Point1.x, Point2.x, Point3.x, Point4.x), min(Point1.y, Point2.y, Point3.y, Point4.y))
     return (PointMin <= Point5 <= PointMax)
 
+
+# Checks if a Point is in a Sector, also checks the lines bounded by the Sector
 def IsPointInSectorAndPoints(Sector1, CheckPoint):
-
-    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)])^(CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
+    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)]) ^ (CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
     if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
-        return  len(list(filter(lambda Orientation: Orientation > 0, Orientations))) == 0
+        return len(list(filter(lambda Orientation: Orientation > 0, Orientations))) == 0
     else:
-        return  len(list(filter(lambda Orientation: Orientation < 0, Orientations))) == 0
+        return len(list(filter(lambda Orientation: Orientation < 0, Orientations))) == 0
 
+
+# Checks if a point is inside a sector, does not check lines of sector
 def IsPointInSectorNotPoints(Sector1, CheckPoint):
-    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)])^(CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
+    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)]) ^ (CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
     if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
-        return  len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
+        return len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
     else:
-        return  len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
+        return len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
+
+
 # Map Class deals with all the Map creation Functions
 class Map():
     # Initialise Map with WorldSize a list of [width, height]

@@ -17,7 +17,6 @@ class Point(list):
         else:
             return self.__class__(self[0] - other, self[1] - other)
     def __truediv__(self, other):
-
         if type(other) is self.__class__:
             return self.__class__(self[0] / other[0], self[1] / other[1])
         if type(other) is int or other is float:
@@ -90,7 +89,7 @@ class Vector(list):
         return math.sqrt(abs(self[0].x - self[1].x)**2 + abs(self[0].y - self[1].y)**2)
     # Get Direction of the Vector
     def Direction(self):
-        return math.arctan(abs(self[0].y - self[1].y) / abs(self[0].x - self[1].x))
+        return math.atan2(abs(self[0].y - self[1].y) / abs(self[0].x - self[1].x))
     @property
     def point1(self):
         return self[0]
