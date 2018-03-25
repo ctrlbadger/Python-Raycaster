@@ -118,41 +118,7 @@ class Map():
         #Might be out of range so best to leave it alone
         return CheckSector
 
-    """def NewVector(self, NewVector):
-
-        if not IsPointInSectorAndPoints(self.Sectors[self.Sector], NewVector[0]):
-            self.NewSector = self.FindNewSector(self.Sector, NewVector[0])
         
-        # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
-        ProposedVectorsDict = {}
-        for VectorPointIndex in range(len(NewVector)):
-            # Create New Vectors going from the point to all points in Sector
-            ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
-            ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
-
-        # Remove any intersecting Vectors
-        for BlackKey in list(ProposedVectorsDict.keys()):
-            # Create a list of ProposedVectorsDict that does not include BlackKey.
-            # This means we will not Intersect BlackKey with itself and try and delete it
-            blacklistdict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
-            blacklistdict.append(NewVector)
-
-            Intersection = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*ProposedVectorsDict[BlackKey], *ProposedPoint), blacklistdict))
-            if len(Intersection) > 0:
-                del ProposedVectorsDict[BlackKey]
-
-        # Add NewVector to UserVectors and to Vectors
-        self.UserVectors[len(self.UserVectors)] = NewVector
-        self.Vectors[(0, len(self.UserVectors))]= NewVector
-
-        # Reindex ProposedVectorsDict and add to ComputerVectors
-        ProposedVectorsDict = dict(enumerate(ProposedVectorsDict.values(), start=len(self.ComputerVectors)))
-        self.ComputerVectors.update(ProposedVectorsDict)
-        self.Vectors.update(dict(((1, Key), Value) for Key, Value in ProposedVectorsDict.items()))
-
-        #Return a dict of all new vectors created so we can blit them to Pygame LineSurface
-        self.CalculateSectors(NewVector, ProposedVectorsDict)
-        return [NewVector] + list(ProposedVectorsDict.values())"""
     def NewVector(self, NewVector):
         NewVectorSectors = [self.FindNewSector(self.Sector, NewVector[0]), self.FindNewSector(self.Sector, NewVector[1])]
         ProposedVectorsDict = {}
