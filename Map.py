@@ -95,6 +95,8 @@ class Map():
 
         # Just going to hard code in the First sector might channge it later
         self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(9, 9), Point(0,9))}
+        self.DeletedSectors = 0
+
         self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
         self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
@@ -177,14 +179,18 @@ class Map():
         PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
         for Index in PointInSector:
             del FoundSectors[FoundSectors.index(Index)]
+        
+        
         FoundSectors = list(map(lambda FoundSector: Sector(*FoundSector), FoundSectors))
-        FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors)))
+        FoundDict = dict(enumerate(FoundSectors, start=len(self.Sectors) + self.DeletedSectors))
 
         
         # Now to remove current sector from the PointTable and remove it from dict of Sectors
         for OldSectorPoint in self.Sectors[self.Sector]:
             self.PointTable[OldSectorPoint].remove(self.Sector)
         del self.Sectors[self.Sector]
+        self.DeletedSectors += 1
+        self.Sector += 1
 
         for SectorKey, FoundSector in FoundDict.items():
             for SectorPoint in FoundSector:
@@ -196,5 +202,5 @@ class Map():
 
 
         self.Sectors.update(FoundDict)
-        self.Sector += 1
+        
         return FoundSectors
