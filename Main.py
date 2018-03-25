@@ -22,7 +22,7 @@ IsDragging = False
 while True:
     events = pygame.event.get()
     for event in events:
-        
+
         if event.type == pygame.QUIT:
             pygame.quit()
         # Is mouse moving? If mousing over a dot then colour
