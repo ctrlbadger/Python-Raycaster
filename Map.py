@@ -125,11 +125,13 @@ class Map():
         if len(set(NewVectorSectors)) == 1:
             self.Sector = NewVectorSectors[0]
             # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
+
             for VectorPointIndex in range(len(NewVector)):
                 # Create New Vectors going from the point to all points in Sector
                 ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
                 ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
         else:
+<<<<<<< HEAD
             # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors 
             IntersectedVectors = set([frozenset(IntersectedVectors) for IntersectedVectors in self.ComputerVectors.values() if VectorIntersectLinesNotPoints(*IntersectedVectors, *NewVector)])
             IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(IntersectedVectors & set(map(frozenset, SectorValue.Vectors))))}
@@ -157,6 +159,7 @@ class Map():
             # This algorithm essentially looks for Vectors with the same Point and matches them together
             SelectedVector = [*SectorVectorsSet.pop()]
             # Points are the Points of the newly created Sector
+            Points = [SelectedVector[1]]
             SectorVectorSetLength = len(SectorVectorsSet)
             # Loop through SectorVectorSet removing SelectedVector from the set
             for _ in range(SectorVectorSetLength):
@@ -165,6 +168,7 @@ class Map():
 >>>>>>> f485060b773c9a4ddb4f5ad91039b85ca5066c7c
                 FoundVector = [*FoundVector[0]]
 
+                # Reorder the new Vector and append the new point to Points
                 Index = FoundVector.index(SelectedVector[1])
                 NewSectorPoints.append(FoundVector[(Index + 1) % 2])
                 SelectedVector = [FoundVector[Index], FoundVector[(Index + 1) % 2]]
