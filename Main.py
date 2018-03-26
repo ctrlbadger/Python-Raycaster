@@ -22,7 +22,6 @@ IsDragging = False
 while True:
     events = pygame.event.get()
     for event in events:
-        
         if event.type == pygame.QUIT:
             pygame.quit()
         # Is mouse moving? If mousing over a dot then colour
@@ -52,7 +51,6 @@ while True:
                 graphics.DrawSprites()
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             GetPos = graphics.IsMouseOverGrid(10)
-            #
             if GetPos != []:
                 GetPos = GetPos[0]
                 # Rescale the points to fit the grid size

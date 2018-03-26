@@ -132,26 +132,30 @@ class Map():
                 ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
         else:
             # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors 
-            Intersection = set([frozenset(IntersectedVectors) for IntersectedVectors in self.ComputerVectors.values() if VectorIntersectLinesNotPoints(*IntersectedVectors, *NewVector)])
-            IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(Intersection & set(map(frozenset, SectorValue.Vectors))))}
-            SectorVectorsSet = set()
+            IntersectedVectors = set([frozenset(IntersectedVectors) for IntersectedVectors in self.ComputerVectors.values() if VectorIntersectLinesNotPoints(*IntersectedVectors, *NewVector)])
+            IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(IntersectedVectors & set(map(frozenset, SectorValue.Vectors))))}
+            NewSectorVectors = set()
             for CurrentSector in list(IntersectedSectors.values()):
-                NewSectors = set([frozenset(CurrentVector) for CurrentVector in CurrentSector.Vectors]) - Intersection
-                SectorVectorsSet.update(frozenset(NewSectors))
+                NewVectors = set([frozenset(CurrentVector) for CurrentVector in CurrentSector.Vectors]) - IntersectedVectors
+                NewSectorVectors.update(frozenset(NewVectors))
             
-            SelectedVector = [*SectorVectorsSet.pop()]
-            Points = []
-            SectorVectorSetLength = len(SectorVectorsSet)
+            SelectedVector = [*NewSectorVectors.pop()]
+            NewSectorPoints = []
+            SectorVectorSetLength = len(NewSectorVectors)
             for _ in range(SectorVectorSetLength):
-                FoundVector = list(filter(lambda CurrentVector: SelectedVector[1] in CurrentVector, SectorVectorsSet))
+                FoundVector = list(filter(lambda CurrentVector: SelectedVector[1] in CurrentVector, NewSectorVectors))
                 FoundVector = [*FoundVector[0]]
 
                 Index = FoundVector.index(SelectedVector[1])
-                Points.append(FoundVector[(Index + 1) % 2])
+                NewSectorPoints.append(FoundVector[(Index + 1) % 2])
                 SelectedVector = [FoundVector[Index], FoundVector[(Index + 1) % 2]]
-                SectorVectorsSet.remove(frozenset(FoundVector))
+                NewSectorVectors.remove(frozenset(FoundVector))
                 
-            print(Points)
+            print(NewSectorPoints)
+            # TODO: Remove Sectors from Point Table. Remove IntersectedVectors from ComputerVectors. Remove IntersectedSectors from Sector
+            
+
+            # TODO: Add new Sector to PointTable and Sectors
 
         # Remove any intersecting Vectors
         for BlackKey in list(ProposedVectorsDict.keys()):
@@ -179,7 +183,8 @@ class Map():
 
     # Create new Sectors from new vector and the proposed computer vectors created from it
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
-        ProposedVectorSets = list(map(lambda ProposedVectors: set(ProposedVectors), list(ProposedVectorsDict.values())))
+        #ProposedVectorSets = list(map(lambda ProposedVectors: set(ProposedVectors), list(ProposedVectorsDict.values())))
+        ProposedVectorSets = list(map(set, list(ProposedVectorsDict.values())))
         FoundSectors = []
 
         # Find Sectors bounded by a sector wall and a point in the NewVector
