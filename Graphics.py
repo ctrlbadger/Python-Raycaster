@@ -65,19 +65,32 @@ class Graphics():
         return FocusedPoint
     def DrawNewLines(self, VectorList, ScalingFactor, Offset):
         VectorRects = []
-        for Vector in VectorList:
-            ScaledVector1 = ((Vector[0] * ScalingFactor) - Offset).PointToIntPoint()
-            ScaledVector2 = ((Vector[1] * ScalingFactor) - Offset).PointToIntPoint()
+        for VectorLine in VectorList:
+            ScaledVector1 = ((VectorLine[0] * ScalingFactor) - Offset).PointToIntPoint()
+            ScaledVector2 = ((VectorLine[1] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector1.PointToIntPoint()
             ScaledVector2.PointToIntPoint()
 
-            pygame.gfxdraw.line(self.LineSurface, *ScaledVector1, *ScaledVector2, pygame.Color('red'))
+            pygame.gfxdraw.line(self.LineSurface, *ScaledVector1, *ScaledVector2, VectorLine.Color)
             SortX = sorted([ScaledVector1.x, ScaledVector2.x])
             SortY = sorted([ScaledVector1.y, ScaledVector2.y])
             VectorRects.append(pygame.Rect(SortX[0], SortY[0], (SortX[1]-SortX[0]), (SortY[1]-SortY[0])))
             self.Background.blit(self.LineSurface, self.LineSurface.get_rect())
         pygame.display.update()
+    def RemoveLines(self, VectorList, ScalingFactor, Offset):
+        VectorRects = []
+        for VectorLine in VectorList:
+            ScaledVector1 = ((VectorLine[0] * ScalingFactor) - Offset).PointToIntPoint()
+            ScaledVector2 = ((VectorLine[1] * ScalingFactor) - Offset).PointToIntPoint()
+            ScaledVector1.PointToIntPoint()
+            ScaledVector2.PointToIntPoint()
 
+            pygame.gfxdraw.line(self.LineSurface, *ScaledVector1, *ScaledVector2, pygame.Color('white'))
+            SortX = sorted([ScaledVector1.x, ScaledVector2.x])
+            SortY = sorted([ScaledVector1.y, ScaledVector2.y])
+            VectorRects.append(pygame.Rect(SortX[0], SortY[0], (SortX[1]-SortX[0]), (SortY[1]-SortY[0])))
+            self.Background.blit(self.LineSurface, self.LineSurface.get_rect())
+        pygame.display.update()
 class Dot(pygame.sprite.DirtySprite):
     def __init__(self, XCoordinate, YCoordinate, Radius, Colour):
         self.Point = Point(XCoordinate, YCoordinate)

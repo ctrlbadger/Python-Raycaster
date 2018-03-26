@@ -59,8 +59,12 @@ while True:
                 GridY = int((GetPos.y + OFFSET.y)/SCALE_FACTOR)
                 # Create any new vectors that need to be created
                 NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY)))
+                NewVectors[0].Color = pygame.Color('red')
+                for ComputerVector in NewVectors[1:]:
+                    ComputerVector.Color = pygame.Color('grey')
                 graphics.DrawNewLines(NewVectors, SCALE_FACTOR, OFFSET)
-
+                graphics.RemoveLines(VectorMap.RemovedVectors, SCALE_FACTOR, OFFSET)
+                VectorMap.RemovedVectors = []
             graphics.DirtySprites.remove(graphics.DotDragSprites)
             graphics.DirtySprites.remove(graphics.LineDrag)
             graphics.DotDragSprites = []

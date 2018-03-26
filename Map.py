@@ -96,6 +96,7 @@ class Map():
         # Just going to hard code in the First sector might channge it later
         self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(9, 9), Point(0,9))}
         self.DeletedSectors = 0
+        self.RemovedVectors = []
 
         self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
         self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
@@ -126,66 +127,53 @@ class Map():
             self.Sector = NewVectorSectors[0]
             # ProposedVectorsDict is all the possible combinations of Vectors from the point to the Sector Points
 
-            for VectorPointIndex in range(len(NewVector)):
-                # Create New Vectors going from the point to all points in Sector
-                ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
-                ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
+            
         else:
-<<<<<<< HEAD
             # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors 
-            IntersectedVectors = set([frozenset(IntersectedVectors) for IntersectedVectors in self.ComputerVectors.values() if VectorIntersectLinesNotPoints(*IntersectedVectors, *NewVector)])
-            IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(IntersectedVectors & set(map(frozenset, SectorValue.Vectors))))}
+            IntersectedVectors = {VectorKey:frozenset(IntersectedVector) for VectorKey, IntersectedVector in self.ComputerVectors.items() if VectorIntersectLinesNotPoints(*IntersectedVector, *NewVector)}
+            IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(set(IntersectedVectors.values()) & set(map(frozenset, SectorValue.Vectors))))}
             NewSectorVectors = set()
             for CurrentSector in list(IntersectedSectors.values()):
-                NewVectors = set([frozenset(CurrentVector) for CurrentVector in CurrentSector.Vectors]) - IntersectedVectors
+                NewVectors = set([frozenset(CurrentVector) for CurrentVector in CurrentSector.Vectors]) - set(IntersectedVectors.values())
                 NewSectorVectors.update(frozenset(NewVectors))
             
             SelectedVector = [*NewSectorVectors.pop()]
-            NewSectorPoints = []
+            NewSectorPoints = [SelectedVector[1]]
             SectorVectorSetLength = len(NewSectorVectors)
             for _ in range(SectorVectorSetLength):
                 FoundVector = list(filter(lambda CurrentVector: SelectedVector[1] in CurrentVector, NewSectorVectors))
-=======
-            # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors
-            Intersection = set([frozenset(IntersectedVectors) for IntersectedVectors in self.ComputerVectors.values() if VectorIntersectLinesNotPoints(*IntersectedVectors, *NewVector)])
-            IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(Intersection & set(map(frozenset, SectorValue.Vectors))))}
-            # SectorVectorsSet are the Vectors created from the Sectors
-            SectorVectorsSet = set()
-            for CurrentSector in list(IntersectedSectors.values()):
-                NewSectors = set([frozenset(CurrentVector) for CurrentVector in CurrentSector.Vectors]) - Intersection
-                SectorVectorsSet.update(frozenset(NewSectors))
-
-            # SelectedVector is the current vector we are trying to match
-            # This algorithm essentially looks for Vectors with the same Point and matches them together
-            SelectedVector = [*SectorVectorsSet.pop()]
-            # Points are the Points of the newly created Sector
-            Points = [SelectedVector[1]]
-            SectorVectorSetLength = len(SectorVectorsSet)
-            # Loop through SectorVectorSet removing SelectedVector from the set
-            for _ in range(SectorVectorSetLength):
-                # Find the vector that corresponds to SelectedVector
-                FoundVector = list(filter(lambda CurrentVector: SelectedVector[1] in CurrentVector, SectorVectorsSet))
->>>>>>> f485060b773c9a4ddb4f5ad91039b85ca5066c7c
                 FoundVector = [*FoundVector[0]]
 
                 # Reorder the new Vector and append the new point to Points
                 Index = FoundVector.index(SelectedVector[1])
                 NewSectorPoints.append(FoundVector[(Index + 1) % 2])
                 SelectedVector = [FoundVector[Index], FoundVector[(Index + 1) % 2]]
-<<<<<<< HEAD
                 NewSectorVectors.remove(frozenset(FoundVector))
                 
             print(NewSectorPoints)
             # TODO: Remove Sectors from Point Table. Remove IntersectedVectors from ComputerVectors. Remove IntersectedSectors from Sector
+            for IntersectedVectorKey in IntersectedVectors.keys():
+                self.RemovedVectors.append(self.ComputerVectors[IntersectedVectorKey])
+                del self.ComputerVectors[IntersectedVectorKey]
+                del self.Vectors[(1, IntersectedVectorKey)]
+                
+
+            for IntersectedSectorsKey, IntersectedSector in IntersectedSectors.items():
+                for IntersectedPoint in IntersectedSector:
+                    self.PointTable[IntersectedPoint].remove(IntersectedSectorsKey)
+                del self.Sectors[IntersectedSectorsKey]
+                self.DeletedSectors += 1
             
-
             # TODO: Add new Sector to PointTable and Sectors
-=======
-                # Remove the new found vector as to not find it next iteration
-                SectorVectorsSet.remove(frozenset(FoundVector))
-
-            input(Points)
->>>>>>> f485060b773c9a4ddb4f5ad91039b85ca5066c7c
+            self.Sector = len(self.Sectors) + self.DeletedSectors
+            for SectorPoint in Sector(*NewSectorPoints):
+                print(SectorPoint)
+                self.PointTable[SectorPoint].append((len(self.Sectors) + self.DeletedSectors))
+            self.Sectors[len(self.Sectors) + self.DeletedSectors] = Sector(*NewSectorPoints)
+        for VectorPointIndex in range(len(NewVector)):
+                # Create New Vectors going from the point to all points in Sector
+                ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
+                ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
 
         # Remove any intersecting Vectors
         for BlackKey in list(ProposedVectorsDict.keys()):
@@ -193,6 +181,7 @@ class Map():
             # This means we will not Intersect BlackKey with itself and try and delete it
             blacklistdict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
             blacklistdict.append(NewVector)
+            blacklistdict += self.Sectors[self.Sector].Vectors
 
             Intersection = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*ProposedVectorsDict[BlackKey], *ProposedPoint), blacklistdict))
             if len(Intersection) > 0:
@@ -209,7 +198,7 @@ class Map():
 
         #Return a dict of all new vectors created so we can blit them to Pygame LineSurface
         self.CalculateSectors(NewVector, ProposedVectorsDict)
-        return [NewVector] + list(ProposedVectorsDict.values())
+        return [Vector(*NewVector)] + list(ProposedVectorsDict.values())
 
     # Create new Sectors from new vector and the proposed computer vectors created from it
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
