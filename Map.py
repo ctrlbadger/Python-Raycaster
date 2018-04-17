@@ -1,26 +1,24 @@
 from PointVectorSector import *
 import pygame
 
-# Check if Line AB and CD intersect, however will return false if the points intersect.
-# This is used for checking if Created Vectors in a sector intersect
-# https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
-
-# I actually think this is the Dot Cross Product
-def Projection(A, B):
-    return (A.x * B.x) + (A.y*B.y)
-
 
 def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
+    """
+    Check if Line P, Ps and Q, Qs intersect, however will return false if the points intersect.
+    This is used for checking if Created Vectors in a sector intersect
+    https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+    """
     R = (Ps-P)
     S = (Qs-Q)
     # Collinear
     if R ^ S == 0 and (Q-P) ^ R == 0:
         try:
             # Check if both vectors each other
-            t_zero = Projection((Q-P), R) / Projection(R, R)
-            t_one = Projection((Q+S-P), R) / Projection(R, R)
+            t_zero = ((Q - P) * R) / (R * R)
+            t_one = ((Q + S - P) * R) / (R * R)
             return (0 < t_zero < 1) or (0 < t_one < 1)
         except ZeroDivisionError:
+            
             return True
     # Parallel but not collinear
     elif R ^ S == 0 and (Q-P) ^ R != 0:
@@ -30,32 +28,36 @@ def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
         u = ((Q-P) ^ R)/(R ^ S)
         return (0 < t < 1) and (0 < u < 1)
 
-print(VectorIntersectLinesNotPoints(Point(0, 0), Point(4, 4), Point(0, 0), Point(4, 4)))
 
-# Check if Line AB and CD intersect
-# Used in the Actual Raycasting to check how far points are away
-def VectorIntersectLinesAndPoints(A, B, C, D):
-    Denom = (B-A)^(D-C)
-    if Denom == 0:
-        if (C-A) <= (B-A) or (D-A) <= (B-A):
+def VectorIntersectLinesAndPoints(P, Ps, Q, Qs):
+    """Check if Line P, Ps and Q, Qs intersect"""
+    R = (Ps-P)
+    S = (Qs-Q)
+    # Collinear
+    if R ^ S == 0 and (Q-P) ^ R == 0:
+        try:
+            # Check if both vectors each other
+            t_zero = ((Q - P) * R) / (R * R)
+            t_one = ((Q + S - P) * R) / (R * R)
+            return (0 <= t_zero <= 1) or (0 <= t_one <= 1)
+        except ZeroDivisionError:
+            
             return True
-        else:
-            return False
+    # Parallel but not collinear
+    elif R ^ S == 0 and (Q-P) ^ R != 0:
+        return False
     else:
+        t = ((Q-P) ^ S)/(R ^ S)
+        u = ((Q-P) ^ R)/(R ^ S)
+        return (0 <= t <= 1) and (0 <= u <= 1)
 
-        VectorU = ((C^(D-C))-(A^(D-C)))/Denom
-        VectorV = ((A^(B-A))-(C^(B-A)))/-Denom
-        if (0 <= VectorU <= 1) and (0 <= VectorV <= 1):
-            return True
-        else:
-            return False
 
 
 # Checks if the Triangle created by Point1, Point2 and Point3 Intersect
 # NOTE: Don't know if this works or not as haven't tried it but in principle it should
 # Might have to rename function IsTriangleAntiClockwise
 def IsTriangleClockwise(Point1, Point2, Point3):
-    return (Point2-Point1)^(Point3-Point1) > 0
+    return (Point2-Point1)^(Point3-Point1) >= 0
 
 # Check if Point4 is in Triangle bounded by Point1, Point2, Point3
 # Used to check if a point is in a given sector
@@ -273,3 +275,37 @@ class Map():
         self.Sectors.update(FoundDict)
 
         return FoundSectors
+
+
+
+
+if __name__ == "__main__":
+    import PointVectorSector as pvs
+    print("Running main")
+
+    # Points
+    p1 = pvs.Point(0, 10)
+    p2 = pvs.Point(10, 0)
+    p3 = pvs.Point(10, 10)
+    p4 = pvs.Point(0, 0)
+
+    # Directly Perpendicular 
+    v1 = pvs.Vector(p1, p2)
+    v2 = pvs.Vector(p3, p4)
+
+    # Parallel
+    v3 = pvs.Vector(p1, p3)
+    v4 = pvs.Vector(p2, p4)
+
+    # Sectors
+    s1 = pvs.Sector(p4, p1, p2)
+    s2 = pvs.Sector(p1, p2, p3)
+
+
+
+
+    
+
+    
+
+

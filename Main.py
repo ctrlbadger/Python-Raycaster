@@ -1,8 +1,5 @@
 import pygame
 import pygame.gfxdraw
-import queue
-import Debugger
-
 
 from Graphics import *
 from Map import *
@@ -20,14 +17,8 @@ VectorMap = Map(WORLD_SIZE)
 def RelativePosition(PositionPoint, ScaleFactor, Offset):
     return (PositionPoint + Offset) / ScaleFactor
 
-GlobalQueue = queue.Queue(maxsize=1)
-ExecQueue = queue.Queue()
 IsDragging = False
-DebugApp = Debugger.ApplicationThread(GlobalQueue, ExecQueue)
 while True:
-
-    if GlobalQueue.empty():
-        GlobalQueue.put(globals())
     events = pygame.event.get()
     for event in events:
         if event.type == pygame.QUIT:
@@ -77,4 +68,4 @@ while True:
             graphics.LineDrag = None
             IsDragging = False
             graphics.DrawSprites()
-            """debug"""
+
