@@ -66,6 +66,8 @@ class Graphics():
     def DrawNewLines(self, VectorList, ScalingFactor, Offset):
         VectorRects = []
         for VectorLine in VectorList:
+            if VectorLine.Color == None:
+                VectorLine.Color = pygame.Color('grey')
             ScaledVector1 = ((VectorLine[0] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector2 = ((VectorLine[1] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector1.PointToIntPoint()

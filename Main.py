@@ -1,5 +1,8 @@
 import pygame
 import pygame.gfxdraw
+import queue
+import Debugger
+
 
 from Graphics import *
 from Map import *
@@ -17,9 +20,14 @@ VectorMap = Map(WORLD_SIZE)
 def RelativePosition(PositionPoint, ScaleFactor, Offset):
     return (PositionPoint + Offset) / ScaleFactor
 
-
+GlobalQueue = queue.Queue(maxsize=1)
+ExecQueue = queue.Queue()
 IsDragging = False
+DebugApp = Debugger.ApplicationThread(GlobalQueue, ExecQueue)
 while True:
+
+    if GlobalQueue.empty():
+        GlobalQueue.put(globals())
     events = pygame.event.get()
     for event in events:
         if event.type == pygame.QUIT:
@@ -59,11 +67,9 @@ while True:
                 GridY = int((GetPos.y + OFFSET.y)/SCALE_FACTOR)
                 # Create any new vectors that need to be created
                 NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY)))
-                NewVectors[0].Color = pygame.Color('red')
-                for ComputerVector in NewVectors[1:]:
-                    ComputerVector.Color = pygame.Color('grey')
-                graphics.DrawNewLines(NewVectors, SCALE_FACTOR, OFFSET)
                 graphics.RemoveLines(VectorMap.RemovedVectors, SCALE_FACTOR, OFFSET)
+                graphics.DrawNewLines(VectorMap.Vectors.values(), SCALE_FACTOR, OFFSET)
+
                 VectorMap.RemovedVectors = []
             graphics.DirtySprites.remove(graphics.DotDragSprites)
             graphics.DirtySprites.remove(graphics.LineDrag)
@@ -71,3 +77,4 @@ while True:
             graphics.LineDrag = None
             IsDragging = False
             graphics.DrawSprites()
+            """debug"""

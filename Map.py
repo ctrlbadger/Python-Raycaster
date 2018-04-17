@@ -1,5 +1,5 @@
 from PointVectorSector import *
-
+import pygame
 
 # Check if Line AB and CD intersect, however will return false if the points intersect.
 # This is used for checking if Created Vectors in a sector intersect
@@ -29,6 +29,8 @@ def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
         t = ((Q-P) ^ S)/(R ^ S)
         u = ((Q-P) ^ R)/(R ^ S)
         return (0 < t < 1) and (0 < u < 1)
+
+print(VectorIntersectLinesNotPoints(Point(0, 0), Point(4, 4), Point(0, 0), Point(4, 4)))
 
 # Check if Line AB and CD intersect
 # Used in the Actual Raycasting to check how far points are away
@@ -91,7 +93,10 @@ class Map():
         self.Sectors = {}
         self.Vectors = {}
         self.UserVectors = {}
+        self.DeletedUserVectors = 0
+
         self.ComputerVectors = {}
+        self.DeletedComputerVectors = 0
 
         # Just going to hard code in the First sector might channge it later
         self.Sectors = {0: Sector(Point(0, 0), Point(9,0), Point(9, 9), Point(0,9))}
@@ -100,6 +105,7 @@ class Map():
 
         self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
         self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
+        
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
 
     # Try and locate a point, will search any sectors around it and then every sector. Yes I know it's not that efficient
@@ -134,6 +140,7 @@ class Map():
         else:
             # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors 
             IntersectedVectors = {VectorKey:frozenset(IntersectedVector) for VectorKey, IntersectedVector in self.ComputerVectors.items() if VectorIntersectLinesNotPoints(*IntersectedVector, *NewVector)}
+            IntersectedVectors = {VectorKey:VectorValue for VectorKey, VectorValue in IntersectedVectors.items() if len(list(filter(lambda CheckingVector: VectorIntersectLinesNotPoints(*CheckingVector, *VectorValue), IntersectedVectors.values()))) == 0}
             IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(set(IntersectedVectors.values()) & set(map(frozenset, SectorValue.Vectors))))}
             NewSectorVectors = set()
             for CurrentSector in list(IntersectedSectors.values()):
@@ -153,11 +160,11 @@ class Map():
                 SelectedVector = [FoundVector[Index], FoundVector[(Index + 1) % 2]]
                 NewSectorVectors.remove(frozenset(FoundVector))
                 
-            print(NewSectorPoints)
             # Remove Sectors from Point Table. Remove IntersectedVectors from ComputerVectors. Remove IntersectedSectors from Sector
             for IntersectedVectorKey in IntersectedVectors.keys():
                 self.RemovedVectors.append(self.ComputerVectors[IntersectedVectorKey])
                 del self.ComputerVectors[IntersectedVectorKey]
+                self.DeletedComputerVectors += 1
                 del self.Vectors[(1, IntersectedVectorKey)]
                 
 
@@ -184,24 +191,27 @@ class Map():
             ProposedVectorsFromPoint = dict(enumerate(map(lambda SectorPoint: Vector(NewVector[VectorPointIndex], SectorPoint), self.Sectors[self.Sector]), start=len(ProposedVectorsDict)))
             ProposedVectorsDict = {**ProposedVectorsDict, **ProposedVectorsFromPoint}
 
+        VectorSets = set(map(frozenset, self.Sectors[self.Sector].Vectors))
         # Remove any intersecting Vectors
         for BlackKey in list(ProposedVectorsDict.keys()):
             # Create a list of ProposedVectorsDict that does not include BlackKey.
             # This means we will not Intersect BlackKey with itself and try and delete it
             blacklistdict = [WhiteValue for WhiteKey, WhiteValue in ProposedVectorsDict.items() if WhiteKey != BlackKey]
-            blacklistdict.append(NewVector)
+            blacklistdict.append(Vector(*NewVector))
             blacklistdict += self.Sectors[self.Sector].Vectors
-
             Intersection = list(filter(lambda ProposedPoint: VectorIntersectLinesNotPoints(*ProposedVectorsDict[BlackKey], *ProposedPoint), blacklistdict))
-            if len(Intersection) > 0:
+            if len(Intersection) > 0 or len(frozenset(ProposedVectorsDict[BlackKey]) & VectorSets) > 0:
                 del ProposedVectorsDict[BlackKey]
 
+
         # Add NewVector to UserVectors and to Vectors
-        self.UserVectors[len(self.UserVectors)] = NewVector
-        self.Vectors[(0, len(self.UserVectors))]= NewVector
+        NewUserVector = Vector(*NewVector)
+        NewUserVector.Color = pygame.Color('red')
+        self.Vectors[(0, len(self.UserVectors))] = NewUserVector
+        self.UserVectors[len(self.UserVectors)] = NewUserVector
 
         # Reindex ProposedVectorsDict and add to ComputerVectors
-        ProposedVectorsDict = dict(enumerate(ProposedVectorsDict.values(), start=len(self.ComputerVectors)))
+        ProposedVectorsDict = dict(enumerate(ProposedVectorsDict.values(), start=len(self.ComputerVectors) + self.DeletedComputerVectors))
         self.ComputerVectors.update(ProposedVectorsDict)
         self.Vectors.update(dict(((1, Key), Value) for Key, Value in ProposedVectorsDict.items()))
 
@@ -217,7 +227,11 @@ class Map():
 
         # Find Sectors bounded by a sector wall and a point in the NewVector
         for NewPoint in NewVector:
-            Intersection = list(filter(lambda VectorPoint: ((set((VectorPoint[0], NewPoint)) in ProposedVectorSets) and (set((VectorPoint[1], NewPoint)) in ProposedVectorSets)), self.Sectors[self.Sector].Vectors))
+            Intersection = list(filter(lambda VectorPoint: 
+            ((set((VectorPoint[0], NewPoint)) in ProposedVectorSets) and (set((VectorPoint[1], NewPoint)) in ProposedVectorSets)
+             and not VectorIntersectLinesNotPoints(*VectorPoint, VectorPoint[0], NewPoint) and not VectorIntersectLinesNotPoints(*VectorPoint, VectorPoint[0], list({*NewVector} - {NewPoint})[0]))
+             , self.Sectors[self.Sector].Vectors))
+
             for Index in Intersection:
                 NewSector = set((*self.Sectors[self.Sector].Vectors[self.Sectors[self.Sector].Vectors.index(Index)], NewPoint))
                 if NewSector not in FoundSectors:
@@ -225,7 +239,7 @@ class Map():
 
         # Find Sectors bounded by NewVector and a sector point
         for SectorPoint in self.Sectors[self.Sector]:
-            if (set((SectorPoint, NewVector[0])) in ProposedVectorSets) and (set((SectorPoint, NewVector[1])) in ProposedVectorSets):
+            if (set((SectorPoint, NewVector[0])) in ProposedVectorSets) and (set((SectorPoint, NewVector[1])) in ProposedVectorSets) and not VectorIntersectLinesNotPoints(*NewVector, NewVector[0], SectorPoint):
                 NewSector = set((*NewVector, SectorPoint))
                 if NewSector not in FoundSectors:
                     FoundSectors.append(NewSector)
