@@ -108,10 +108,10 @@ class Map():
         self.Sector = 0
         self.Sectors = {}
         self.Vectors = {}
-        self.UserVectors = {}
+        self.UserVectors = []
         self.DeletedUserVectors = 0
 
-        self.ComputerVectors = {}
+        #self.ComputerVectors = {}
         self.DeletedComputerVectors = 0
 
         # Just going to hard code in the First sector might channge it later
@@ -120,9 +120,9 @@ class Map():
         self.RemovedVectors = []
 
         self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
-        self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
+        #self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
         
-        self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
+        #self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
 
     # Try and locate a point, will search any sectors around it and then every sector. Yes I know it's not that efficient
     def FindNewSector(self, CheckSector, CheckPoint):
@@ -241,13 +241,15 @@ class Map():
         
         self.CalculateSectors(vCreated, dProposedVectors)
         # dProposedVectors = {key: Vector(item) for key, item in dProposedVectors.items()}
-        return [Vector(*vCreated)] + list(map(lambda x: Vector(*x), dProposedVectors.values()))
+        self.UserVectors.append(Vector(*vCreated))
+        self.UserVectors[-1].Color = 'red'
+        return [self.UserVectors[-1]] + list(map(lambda x: Vector(*x), dProposedVectors.values()))
     def CreateVectorsSingle(self, iCurrent, vCreated):
         lProposedVectors = []
-        lCurrentSectorVectors = set(map(frozenset, self.Sectors[iCurrent].Vectors))
+        lCurrentSectorVectors = set((map(frozenset, self.Sectors[iCurrent].Vectors), frozenset(vCreated)))
         for indexPoint, vectorPoint in enumerate(vCreated):
             lProposedVectors += [frozenset((vectorPoint, sectorPoint)) for sectorPoint in self.Sectors[iCurrent] if \
-                set((vectorPoint, sectorPoint)) not in lCurrentSectorVectors and \
+                {vectorPoint, sectorPoint} not in lCurrentSectorVectors and \
                 not VectorIntersectLinesNotPoints(vectorPoint, sectorPoint, vectorPoint, vCreated[(indexPoint + 1) % 2])]
             
         dProposedVectors = dict(enumerate(lProposedVectors))
@@ -256,6 +258,7 @@ class Map():
             for whitevector in whitelist:
                 if VectorIntersectLinesNotPoints(*whitevector, *currentVector):
                     del dProposedVectors[index]
+                    break
 
 
         dProposedVectors = dict(enumerate(dProposedVectors.values()))
