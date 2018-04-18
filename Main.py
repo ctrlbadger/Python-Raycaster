@@ -30,7 +30,7 @@ while True:
             MousePosition = Point(*pygame.mouse.get_pos())
             MapMousePosition = RelativePosition(MousePosition, SCALE_FACTOR, OFFSET)
             # So let's implement some more checks so we know where we are
-            if not IsPointInSectorAndPoints(VectorMap.Sectors[VectorMap.Sector], MapMousePosition):
+            if not IsPointInSector(VectorMap.Sectors[VectorMap.Sector], MapMousePosition):
                 VectorMap.Sector = VectorMap.FindNewSector(VectorMap.Sector, MapMousePosition)
             graphics.MouseSprite.ChangeText(str(MousePosition)+str(RelativePosition(MousePosition, SCALE_FACTOR, OFFSET))+str(VectorMap.Sector), pygame.Color('black'))
             graphics.IsMouseOverGrid(10)

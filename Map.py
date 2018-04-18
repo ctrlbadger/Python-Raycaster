@@ -53,23 +53,26 @@ def VectorIntersectLinesAndPoints(P, Ps, Q, Qs):
 
 
 
-# Checks if the Triangle created by Point1, Point2 and Point3 Intersect
-# NOTE: Don't know if this works or not as haven't tried it but in principle it should
-# Might have to rename function IsTriangleAntiClockwise
+
 def IsTriangleClockwise(Point1, Point2, Point3):
+    """Checks if the Triangle created by Point1, Point2 and Point3 Intersect"""
     return (Point2-Point1)^(Point3-Point1) >= 0
 
-# Check if Point4 is in Triangle bounded by Point1, Point2, Point3
-# Used to check if a point is in a given sector
+
 def IsPointInTriangle(Point1, Point2, Point3, Point4):
+    """
+    Check if Point4 is in Triangle bounded by Point1, Point2, Point3
+    Used to check if a point is in a given sector
+    """
     Orientation1 = (Point2 - Point1)^(Point4 - Point1)
     Orientation2 = (Point3 - Point2)^(Point4 - Point2)
     Orientation3 = (Point1 - Point3)^(Point4 - Point3)
     return ((Point2-Point1)^(Point3-Point1) < 0) and (Orientation1 < 0 and Orientation2 < 0 and Orientation3 < 0)
 
 
-# Checks if a Point is in a Sector, also checks the lines bounded by the Sector
-def IsPointInSectorAndPoints(Sector1, CheckPoint):
+
+def IsPointInSector(Sector1, CheckPoint):
+    """Checks if a Point is in a Sector, also checks the lines bounded by the Sector"""
     Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)]) ^ (CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
     if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
         return len(list(filter(lambda Orientation: Orientation > 0, Orientations))) == 0
@@ -77,13 +80,24 @@ def IsPointInSectorAndPoints(Sector1, CheckPoint):
         return len(list(filter(lambda Orientation: Orientation < 0, Orientations))) == 0
 
 
-# Checks if a point is inside a sector, does not check lines of sector
-def IsPointInSectorNotPoints(Sector1, CheckPoint):
+def IsPointInSectorNoLines(Sector1, CheckPoint):
+    """"Checks if a point is inside a sector, does not check lines of sector"""
     Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)]) ^ (CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
     if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
         return len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
     else:
         return len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
+
+def IsPointInSectorNoLinesButPoints(Sector1, CheckPoint):
+    """"Checks if a point is inside a sector, does not check lines of sector but does check Points"""
+    if any(map(lambda sPoint: sPoint == CheckPoint, Sector1)):
+        return True
+    Orientations = [((Sector1[Index] - Sector1[(Index - 1) % len(Sector1)]) ^ (CheckPoint - Sector1[(Index - 1) % len(Sector1)])) for Index in range(len(Sector1))]
+    if (((Sector1[1]-Sector1[0])^(Sector1[2]-Sector1[0])) < 0):
+        return len(list(filter(lambda Orientation: Orientation >= 0, Orientations))) == 0
+    else:
+        return len(list(filter(lambda Orientation: Orientation <= 0, Orientations))) == 0
+
 
 
 # Map Class deals with all the Map creation Functions
@@ -114,23 +128,23 @@ class Map():
     def FindNewSector(self, CheckSector, CheckPoint):
         # Find all adjacent sectors
         AdjacentSectors = [self.PointTable[CheckSectorPoint] for CheckSectorPoint in self.Sectors[CheckSector]]
-        # NewSet =  set([item for sublist in AdjacentSectorsIndex for item in sublist]) - set(CheckSector)
         NewSet = set([item for items in AdjacentSectors for item in items]) - set(CheckPoint)
 
         # Check if point is in Adjacent sectors
         for PossibleSector in list(NewSet):
-            if IsPointInSectorAndPoints(self.Sectors[PossibleSector], CheckPoint): return PossibleSector
+            if IsPointInSector(self.Sectors[PossibleSector], CheckPoint): return PossibleSector
 
         #Huh that's odd guess we are going to have to go on a goose chase to find this one
         for PossibleSector in self.Sectors.keys():
-            if IsPointInSectorAndPoints(self.Sectors[PossibleSector], CheckPoint): return PossibleSector
+            if IsPointInSector(self.Sectors[PossibleSector], CheckPoint): return PossibleSector
+
         #Might be out of range so best to leave it alone
         return CheckSector
 
     def SolveNewVectorSectors(self, NewVector):
         NewVectorSectorIntersects = []
         for NewPoint in NewVector:
-            SectorPointDict = set([SectorKey for SectorKey, SectorValue in self.Sectors.items() if IsPointInSectorAndPoints(SectorValue, NewPoint)])
+            SectorPointDict = set([SectorKey for SectorKey, SectorValue in self.Sectors.items() if IsPointInSectorNoLinesButPoints(SectorValue, NewPoint)])
             NewVectorSectorIntersects.append(SectorPointDict)
         if len(NewVectorSectorIntersects[0]&NewVectorSectorIntersects[1]) == 1:
             self.Sector = [*(NewVectorSectorIntersects[0] & NewVectorSectorIntersects[1])][0]
@@ -247,7 +261,7 @@ class Map():
                     FoundSectors.append(NewSector)
 
         # Remove any sectors that have NewVector Points in them as this would overlap
-        PointInSector = list(filter(lambda NewSector: IsPointInSectorNotPoints(Sector(*NewSector), NewVector[0]) or IsPointInSectorNotPoints(Sector(*NewSector), NewVector[1]), FoundSectors))
+        PointInSector = list(filter(lambda NewSector: IsPointInSectorNoLines(Sector(*NewSector), NewVector[0]) or IsPointInSectorNoLines(Sector(*NewSector), NewVector[1]), FoundSectors))
         for Index in PointInSector:
             del FoundSectors[FoundSectors.index(Index)]
 
@@ -289,6 +303,9 @@ if __name__ == "__main__":
     p3 = pvs.Point(10, 10)
     p4 = pvs.Point(0, 0)
 
+    p5 = pvs.Point(5, 5)
+    p6 = pvs.Point(5, 0)
+
     # Directly Perpendicular 
     v1 = pvs.Vector(p1, p2)
     v2 = pvs.Vector(p3, p4)
@@ -300,9 +317,10 @@ if __name__ == "__main__":
     # Sectors
     s1 = pvs.Sector(p4, p1, p2)
     s2 = pvs.Sector(p1, p2, p3)
+    s3 = pvs.Sector(p1, p3, p2, p4)
 
-
-
+    print(s3, p4, IsPointInSectorNoLines(s3, p4))
+    print(s3, p4, IsPointInSectorNoLinesButPoints(s3, p4))
 
     
 
