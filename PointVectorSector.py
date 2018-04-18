@@ -125,20 +125,4 @@ class Sector(list):
     @property
     def Vectors(self):
         return [Vector(self[Index], self[(Index+1) % len(self)]) for Index in range(len(self))]
-    @property
-    def Point1(self): return self[0]
-    @Point1.setter
-    def Point1(self, value):
-        self[0] = value
-
-    @property
-    def Point2(self): return self[1]
-    @Point2.setter
-    def Point2(self, value):
-        self[1] = value
-
-    @property
-    def Point3(self): return self[2]
-    @Point3.setter
-    def Point3(self, value):
-        self[2] = value
+    
