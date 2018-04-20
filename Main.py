@@ -59,7 +59,7 @@ while True:
                 # Create any new vectors that need to be created
                 NewVectors = VectorMap.NewVector((OriginalPoint, Point(GridX, GridY)))
                 graphics.RemoveLines(VectorMap.RemovedVectors, SCALE_FACTOR, OFFSET)
-                
+
                 graphics.DrawNewLines(NewVectors, SCALE_FACTOR, OFFSET)
 
                 VectorMap.RemovedVectors = []
@@ -69,4 +69,3 @@ while True:
             graphics.LineDrag = None
             IsDragging = False
             graphics.DrawSprites()
-

@@ -25,7 +25,7 @@ class Point(list):
             return self.__class__(self[0] / other[0], self[1] / other[1])
         if type(other) is int or other is float:
             return self.__class__(self[0]/other, self[1]/other)
-    
+
     # Vector Dot Product for Point
     # Point Multiplication if anything else
     def __mul__(self, other):
@@ -90,7 +90,7 @@ class Vector(list):
             return self.__class__(self[0] + Object[0], self[1] + Object[1])
     def __hash__(self):
         return hash((self[0], self[1]))
-    
+
     def Magnitude(self):
         """Get Magnitude of the Vector"""
         return math.sqrt(abs(self[0].x - self[1].x)**2 + abs(self[0].y - self[1].y)**2)
@@ -122,7 +122,13 @@ class Sector(list):
     def __hash__(self):
         return hash(tuple(self))
 
+    def VectorsIter(self):
+        Index = -0
+        while Index < len(self):
+            Index += 1
+            yield Vector(self[Index-1], self[(Index) % len(self)])
+
+
     @property
     def Vectors(self):
         return [Vector(self[Index], self[(Index+1) % len(self)]) for Index in range(len(self))]
-    

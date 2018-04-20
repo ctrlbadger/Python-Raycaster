@@ -18,7 +18,7 @@ def VectorIntersectLinesNotPoints(P, Ps, Q, Qs):
             t_one = ((Q + S - P) * R) / (R * R)
             return (0 < t_zero < 1) or (0 < t_one < 1)
         except ZeroDivisionError:
-            
+
             return True
     # Parallel but not collinear
     elif R ^ S == 0 and (Q-P) ^ R != 0:
@@ -41,7 +41,7 @@ def VectorIntersectLinesAndPoints(P, Ps, Q, Qs):
             t_one = ((Q + S - P) * R) / (R * R)
             return (0 <= t_zero <= 1) or (0 <= t_one <= 1)
         except ZeroDivisionError:
-            
+
             return True
     # Parallel but not collinear
     elif R ^ S == 0 and (Q-P) ^ R != 0:
@@ -119,13 +119,9 @@ class Map():
         self.DeletedSectors = 0
         self.RemovedVectors = []
 
-<<<<<<< HEAD
         self.PointTable = {Point(0, 0): {0}, Point(9,0): {0}, Point(0,9): {0}, Point(9, 9): {0}}
-=======
-        self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
->>>>>>> 5f8dc192a1a981c0e84e702607c1ab183acd7d62
         #self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
-        
+
         #self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
 
     # Try and locate a point, will search any sectors around it and then every sector. Yes I know it's not that efficient
@@ -152,13 +148,13 @@ class Map():
             NewVectorSectorIntersects.append(SectorPointDict)
         if len(NewVectorSectorIntersects[0]&NewVectorSectorIntersects[1]) == 1:
             self.Sector = [*(NewVectorSectorIntersects[0] & NewVectorSectorIntersects[1])][0]
-            
+
         # elif len(NewVectorSectorIntersects[0]&NewVectorSectorIntersects[1]) > 1:
             # So I think this is the case where we have a vector on a new line
             # TODO: Figure out what the hell to do
-        
+
         else:
-            # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors 
+            # Get set of ComputerVectors that intersect with NewVector and find all corresponding Sectors
             IntersectedVectors = {VectorKey:frozenset(IntersectedVector) for VectorKey, IntersectedVector in self.ComputerVectors.items() if VectorIntersectLinesNotPoints(*IntersectedVector, *NewVector)}
             IntersectedVectors = {VectorKey:VectorValue for VectorKey, VectorValue in IntersectedVectors.items() if len(list(filter(lambda CheckingVector: VectorIntersectLinesNotPoints(*CheckingVector, *VectorValue), IntersectedVectors.values()))) == 0}
             IntersectedSectors = {SectorKey:SectorValue for SectorKey, SectorValue in self.Sectors.items() if bool(len(set(IntersectedVectors.values()) & set(map(frozenset, SectorValue.Vectors))))}
@@ -179,21 +175,21 @@ class Map():
                 NewSectorPoints.append(FoundVector[(Index + 1) % 2])
                 SelectedVector = [FoundVector[Index], FoundVector[(Index + 1) % 2]]
                 NewSectorVectors.remove(frozenset(FoundVector))
-                
+
             # Remove Sectors from Point Table. Remove IntersectedVectors from ComputerVectors. Remove IntersectedSectors from Sector
             for IntersectedVectorKey in IntersectedVectors.keys():
                 self.RemovedVectors.append(self.ComputerVectors[IntersectedVectorKey])
                 del self.ComputerVectors[IntersectedVectorKey]
                 self.DeletedComputerVectors += 1
                 del self.Vectors[(1, IntersectedVectorKey)]
-                
+
 
             for IntersectedSectorsKey, IntersectedSector in IntersectedSectors.items():
                 for IntersectedPoint in IntersectedSector:
                     self.PointTable[IntersectedPoint].remove(IntersectedSectorsKey)
                 del self.Sectors[IntersectedSectorsKey]
                 self.DeletedSectors += 1
-            
+
             #Add new Sector to PointTable and Sectors
             self.Sector = len(self.Sectors) + self.DeletedSectors
             for SectorPoint in Sector(*NewSectorPoints):
@@ -216,6 +212,48 @@ class Map():
                         self.Sectors[iCurrent].insert((indexVector + 1) % len(self.Sectors[iCurrent]), vCreated[index])
                         self.PointTable[vCreated[index]] = {iCurrent}
         return
+    def MergeSectors(self, dSectorKeys, vCreated):
+        sectorKey, sectorItem = dSectorKeys.popitem()
+        self.Sector = sectorKey
+        for indexVectorPoint, sectorVector in enumerate(sectorItem.VectorsIter()):
+            if VectorIntersectLinesNotPoints(*sectorVector, *vCreated):
+                # Right so this is where there is an intersection
+                # We need to insert our next sector between sectorItem[indexVectorPoint] and sectorItem[indexVectorPoint + 1]
+                # This is where the set notation comes aliven
+
+                sNextSector = (self.PointTable[sectorVector[0]] & self.PointTable[sectorVector[1]]) - {sectorKey}
+                if len(sNextSector) == 0:
+                    return sectorKey
+                else:
+                    nextSectorKey = sNextSector.pop()
+                    nextSectorItem = self.Sectors[nextSectorKey][:]
+
+                    # Next step is to insert the Sectors points into the other
+                    currentIndex = nextSectorItem.index(sectorVector[0])
+                    lSectorToInsert = nextSectorItem
+
+                    # The new sector is the opposite orientation so we need to reverse it
+                    if nextSectorItem[(currentIndex + 1) % len(nextSectorItem)] != sectorVector[1]:
+                        lSectorToInsert.reverse()
+                        currentIndex = (len(lSectorToInsert) - 1) - currentIndex
+                    #else:
+                    # Make the new sector begin with the intersecting vector
+                    #lSectorToInsert = lSectorToInsert[currentIndex + 2:] + lSectorToInsert[:currentIndex] + lSectorToInsert[currentIndex: currentIndex + 2]
+                    lSectorToInsert = lSectorToInsert[currentIndex + 1:] + lSectorToInsert[:currentIndex + 1]
+                    lSectorToInsert.reverse()
+                    input(lSectorToInsert)
+                    # Insert the new secto r into the old sector.
+                    prevLen = len(sectorItem)
+                    sectorItem[indexVectorPoint:indexVectorPoint + 2] = lSectorToInsert
+                    if (indexVectorPoint + 1) == prevLen:
+                        sectorItem.pop(0)
+                    # Finally lets remove any trace of the new sector!
+                    for sPoint in nextSectorItem:
+                        self.PointTable[sPoint].remove(nextSectorKey)
+                        self.PointTable[sPoint].add(sectorKey)
+                    self.RemovedVectors.append(sectorVector)
+                    del self.Sectors[nextSectorKey]
+        return sectorKey
 
     def NewVector(self, vCreated):
         # First need to establish what the condition of the Vector is.
@@ -230,10 +268,11 @@ class Map():
 
         # First find the index of Sectors for which vCreated has points in
         dProposedVectors = dict
+        iCurrent = int
         dSectorKeys = {key: sItem for key, sItem in self.Sectors.items() if \
             any(map(lambda vectorPoint: IsPointInSector(sItem, vectorPoint), vCreated))}
 
-        
+
         if len(dSectorKeys) == 1: # If only one sector was found
             iCurrent, sCurrent = dSectorKeys.popitem()
             """
@@ -245,10 +284,10 @@ class Map():
             lNoLines = [IsPointInSectorNoLines(sCurrent, vectorPoint) for vectorPoint in vCreated]
             lNoLinesButPoints = [IsPointInSectorNoLinesButPoints(sCurrent, vectorPoint) for vectorPoint in vCreated]
             lZippedCheckVectorPoints = [lNoLines, lNoLinesButPoints]
-            
+
             if not all(lZippedCheckVectorPoints[0]): # We might need to split up the sector
                 self.CutSector(lZippedCheckVectorPoints, iCurrent, vCreated)
-            dProposedVectors = self.CreateVectorsSingle(iCurrent, vCreated)
+
         else:
             # So the time I tried this last I had a migrane just looking at the code
             # The task is to break up sectors into larger sectors
@@ -256,7 +295,7 @@ class Map():
             # Find weird sectors that need breaking up
             for sectorKey, sectorItem in dSectorKeys.items():
                 for pCreated in vCreated:
-                    for indexVectorPoint, sectorVector in enumerate(sectorItem.Vectors):          
+                    for indexVectorPoint, sectorVector in enumerate(sectorItem.Vectors):
                         if VectorIntersectLinesNotPoints(*sectorVector, sectorVector[0], pCreated): # and pCreated not in sectorVector:
                             sectorItem.insert((indexVectorPoint + 1) % len(self.Sectors[sectorKey]), pCreated)
                             if pCreated not in self.PointTable:
@@ -264,19 +303,20 @@ class Map():
                             else:
                                 self.PointTable[pCreated].add(sectorKey)
 
+            iCurrent = self.MergeSectors(dSectorKeys, vCreated)
+            input((iCurrent, self.Sectors[iCurrent]))
+
+        dProposedVectors = self.CreateVectorsSingle(iCurrent, vCreated)
 
 
 
-        
         self.CalculateSectors(vCreated, dProposedVectors)
         # dProposedVectors = {key: Vector(item) for key, item in dProposedVectors.items()}
         self.UserVectors.append(Vector(*vCreated))
         self.UserVectors[-1].Color = 'red'
         return [self.UserVectors[-1]] + list(map(lambda x: Vector(*x), dProposedVectors.values()))
-<<<<<<< HEAD
 
-=======
->>>>>>> 5f8dc192a1a981c0e84e702607c1ab183acd7d62
+
     def CreateVectorsSingle(self, iCurrent, vCreated):
         lProposedVectors = []
         lCurrentSectorVectors = set((map(frozenset, self.Sectors[iCurrent].Vectors), frozenset(vCreated)))
@@ -284,7 +324,7 @@ class Map():
             lProposedVectors += [frozenset((vectorPoint, sectorPoint)) for sectorPoint in self.Sectors[iCurrent] if \
                 {vectorPoint, sectorPoint} not in lCurrentSectorVectors and \
                 not VectorIntersectLinesNotPoints(vectorPoint, sectorPoint, vectorPoint, vCreated[(indexPoint + 1) % 2])]
-            
+
         dProposedVectors = dict(enumerate(lProposedVectors))
         for index, currentVector in dict(dProposedVectors.items()).items():
             whitelist = set(dProposedVectors.values()) - currentVector
@@ -296,8 +336,8 @@ class Map():
 
         dProposedVectors = dict(enumerate(dProposedVectors.values()))
         return dProposedVectors
-        
-                
+
+
 
     # Create new Sectors from new vector and the proposed computer vectors created from it
     def CalculateSectors(self, NewVector, ProposedVectorsDict):
@@ -374,7 +414,7 @@ if __name__ == "__main__":
     p5 = pvs.Point(5, 5)
     p6 = pvs.Point(5, 0)
 
-    # Directly Perpendicular 
+    # Directly Perpendicular
     v1 = pvs.Vector(p1, p2)
     v2 = pvs.Vector(p3, p4)
 
@@ -386,12 +426,9 @@ if __name__ == "__main__":
     s1 = pvs.Sector(p4, p1, p2)
     s2 = pvs.Sector(p1, p2, p3)
     s3 = pvs.Sector(p1, p3, p2, p4)
+    print(s3.VectorsIter())
+    for k, i in enumerate(s3.VectorsIter()):
+        input((k, i))
 
     print(s3, p5, IsPointInSectorNoLines(s3, p5))
     print(s3, p4, IsPointInSectorNoLinesButPoints(s3, p4))
-
-    
-
-    
-
-
