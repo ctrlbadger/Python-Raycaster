@@ -119,7 +119,11 @@ class Map():
         self.DeletedSectors = 0
         self.RemovedVectors = []
 
+<<<<<<< HEAD
         self.PointTable = {Point(0, 0): {0}, Point(9,0): {0}, Point(0,9): {0}, Point(9, 9): {0}}
+=======
+        self.PointTable = {Point(0, 0): [0], Point(9,0): [0], Point(0,9): [0], Point(9, 9): [0]}
+>>>>>>> 5f8dc192a1a981c0e84e702607c1ab183acd7d62
         #self.ComputerVectors = dict(enumerate(self.Sectors[self.Sector].Vectors))
         
         #self.Vectors.update(dict(((1, Key), Value) for Key, Value in self.ComputerVectors.items()))
@@ -269,7 +273,10 @@ class Map():
         self.UserVectors.append(Vector(*vCreated))
         self.UserVectors[-1].Color = 'red'
         return [self.UserVectors[-1]] + list(map(lambda x: Vector(*x), dProposedVectors.values()))
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5f8dc192a1a981c0e84e702607c1ab183acd7d62
     def CreateVectorsSingle(self, iCurrent, vCreated):
         lProposedVectors = []
         lCurrentSectorVectors = set((map(frozenset, self.Sectors[iCurrent].Vectors), frozenset(vCreated)))
