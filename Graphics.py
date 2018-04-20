@@ -68,6 +68,8 @@ class Graphics():
         for VectorLine in VectorList:
             if VectorLine.Color == None:
                 VectorLine.Color = pygame.Color('grey')
+            else:
+                VectorLine.Color = pygame.Color(VectorLine.Color)
             ScaledVector1 = ((VectorLine[0] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector2 = ((VectorLine[1] * ScalingFactor) - Offset).PointToIntPoint()
             ScaledVector1.PointToIntPoint()
